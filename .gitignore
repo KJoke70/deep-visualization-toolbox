@@ -1,4 +1,5 @@
 *.pyc
 .idea
 settings_user.py
+INPUT/
 
