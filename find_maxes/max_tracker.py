@@ -203,7 +203,6 @@ class MaxTracker(object):
         data_unroll = data.reshape((n_channels, -1))          # Note: no copy eg (96,3025). Does nothing if not is_spatial
 
         max_indexes = data_unroll.argmax(1)   # maxes for each channel, eg. (96,)
-
         # add maxes for all channels to a list, bounded to avoid consuming too much memory
         maxes = data_unroll[range(n_channels), max_indexes]
         MAX_LIST_SIZE = 10000
@@ -215,9 +214,7 @@ class MaxTracker(object):
         #insertion_idx = zeros((n_channels,))
         #pdb.set_trace()
         for ii in xrange(n_channels):
-
             max_value = data_unroll[ii, max_indexes[ii]]
-
             # skip nan
             if np.isnan(max_value):
                 # only warn once
@@ -347,6 +344,7 @@ class NetMaxTracker(object):
         self.initial_val = initial_val
         self.settings = settings
         self.siamese_helper = SiameseHelper(self.settings.layers_list)
+        self.maxes_per_img = dict()
 
     def _init_with_net(self, net):
         self.max_trackers = {}
@@ -368,9 +366,11 @@ class NetMaxTracker(object):
                 self.max_trackers[normalized_layer_name] = MaxTracker(is_spatial, blob.shape[1], n_top = self.n_top,
                                                                       initial_val = self.initial_val,
                                                                       dtype = blob.dtype, search_min = self.search_min)
+                self.maxes_per_img[normalized_layer_name] = dict()
 
         self.init_done = True
 
+  
     def update(self, net, image_idx, net_unique_input_source, batch_index):
         '''Updates the maxes found so far with the state of the given net. If a new max is found, it is stored together with the image_idx.'''
 
@@ -429,8 +429,17 @@ class NetMaxTracker(object):
                                                                     net_unique_input_source, layer_name)
 
             else:   # normal, non-siamese network
+                import max_indices_utils as midx
                 self.max_trackers[normalized_layer_name].update(blob[batch_index], image_idx, -1, net_unique_input_source, layer_name)
 
+                # saves array of top-n tuples (unit_index, activation_value) per image
+                per_img_maxes, per_img_max_indices = midx.find_top_n_idx(self.max_trackers[normalized_layer_name].all_max_vals[image_idx])
+                self.maxes_per_img[normalized_layer_name][image_idx] = zip(per_img_max_indices, per_img_maxes)
+                #print self.maxes_per_img[normalized_layer_name][image_idx]
+                #self.maxes_per_img[normalized_layer_name][image_idx] = {'index' : per_img_max_indices, 'value' : per_img_maxes }
+                #print 'idx:', image_idx, 'index:', self.maxes_per_img[normalized_layer_name][image_idx]['index']
+                #print 'idx:', image_idx, 'value:', self.maxes_per_img[normalized_layer_name][image_idx]['value']
+                
         pass
 
     def calculate_histograms(self, outdir):
@@ -532,6 +541,8 @@ def scan_images_for_maxes(settings, net, datadir, n_top, outdir, search_min):
             for i in range(0,batch_index):
 
                 with WithTimer('Update    ', quiet = not do_print):
+                    #print '------------------------------------------------------------------'
+                    print str(batch[i].image_idx) + '\t' + batch[i].filename
                     tracker.update(net, batch[i].image_idx, net_unique_input_source=batch[i].filename, batch_index=i)
 
             batch_index = 0

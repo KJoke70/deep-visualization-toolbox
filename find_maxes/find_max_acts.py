@@ -38,7 +38,7 @@ def pickle_to_text(pickle_filename):
 def main():
 
     parser = argparse.ArgumentParser(description='Finds images in a training set that cause max activation for a network; saves results in a pickled NetMaxTracker.')
-    parser.add_argument('--N', type = int, default = 9, help = 'note and save top N activations')
+    parser.add_argument('--N', type = int, default = 10, help = 'note and save top N activations')
     parser.add_argument('--gpu', action = 'store_true', default = settings.caffevis_mode_gpu, help = 'use gpu')
     parser.add_argument('--net_prototxt', type = str, default = settings.caffevis_deploy_prototxt, help = 'network prototxt to load')
     parser.add_argument('--net_weights', type = str, default = settings.caffevis_network_weights, help = 'network weights to load')
@@ -76,12 +76,26 @@ def main():
 
     save_max_tracker_to_file(args.outfile, net_max_tracker)
 
+    for l in settings.layers_to_output_in_offline_scripts:
+        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.txt'), l)
+
     if args.do_correlation:
         net_max_tracker.calculate_correlation(args.outdir)
 
     if args.do_histograms:
         net_max_tracker.calculate_histograms(args.outdir)
 
+def save_max_tracker_per_image_to_file(filename, layer, net_max_tracker):
+
+    dir_name = os.path.dirname(filename)
+    mkdir_p(dir_name)
+
+    with WithTimer('Saving per-image maxes'):
+        with open(filename, 'w') as ff:
+            for img_idx in net_max_tracker.maxes_per_img[layer]:
+                idx = net_max_tracker.maxes_per_img[layer][img_idx][0]
+                val = net_max_tracker.maxes_per_img[layer][img_idx][1]
+                ff.write("%d:\t%d\t%f\n" % (img_idx, idx, val))
 
 def save_max_tracker_to_file(filename, net_max_tracker):
 
