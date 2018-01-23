@@ -94,11 +94,11 @@ def save_max_tracker_per_image_to_file(filename, net_max_tracker, layer=None):
         if layer is not None:
             with open(filename, 'wb') as ff:
                 pickle.dump(net_max_tracker.maxes_per_img[layer], ff, -1)
-            pickle_to_text(filename)
+            #pickle_to_text(filename)
         else:
             with open(filename, 'wb') as ff:
                 pickle.dump(net_max_tracker.maxes_per_img, ff, -1)
-            pickle_to_text(filename)
+            #pickle_to_text(filename)
 
 def save_max_tracker_to_file(filename, net_max_tracker):
 
