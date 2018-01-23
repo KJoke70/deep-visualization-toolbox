@@ -20,6 +20,7 @@ from caffevis.caffevis_helper import set_mean
 from jby_misc import WithTimer
 from max_tracker import scan_images_for_maxes, scan_pairs_for_maxes
 from settings_misc import load_network
+from misc import get_files_list
 
 from misc import mkdir_p
 
@@ -78,12 +79,25 @@ def main():
 
     for l in settings.layers_to_output_in_offline_scripts:
         save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.pickled'), net_max_tracker, layer=l)
+    
+
+    image_filenames, image_labels = get_files_list(settings)
+    save_image_list_to_file(os.path.join(args.outdir, 'image_list.txt'), image_filenames)
 
     if args.do_correlation:
         net_max_tracker.calculate_correlation(args.outdir)
 
     if args.do_histograms:
         net_max_tracker.calculate_histograms(args.outdir)
+
+def save_image_list_to_file(filename, image_list):
+    dir_name = os.path.dirname(filename)
+    mkdir_p(dir_name)
+
+    with WithTimer('Saving image list'):
+        with open(filename, 'wt') as ff:
+            for i in xrange(len(image_list)):
+                ff.write("%d\t%s" % (i, image_list[i]))
 
 def save_max_tracker_per_image_to_file(filename, net_max_tracker, layer=None):
 
