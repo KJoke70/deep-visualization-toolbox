@@ -77,7 +77,7 @@ def main():
     save_max_tracker_to_file(args.outfile, net_max_tracker)
 
     for l in settings.layers_to_output_in_offline_scripts:
-        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.txt'), net_max_tracker, layer=l)
+        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.pickled'), net_max_tracker, layer=l)
 
     if args.do_correlation:
         net_max_tracker.calculate_correlation(args.outdir)
