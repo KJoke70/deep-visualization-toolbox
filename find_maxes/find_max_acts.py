@@ -77,7 +77,7 @@ def main():
     save_max_tracker_to_file(args.outfile, net_max_tracker)
 
     for l in settings.layers_to_output_in_offline_scripts:
-        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.txt'), l)
+        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.txt'), net_max_tracker, layer=l)
 
     if args.do_correlation:
         net_max_tracker.calculate_correlation(args.outdir)
@@ -85,14 +85,18 @@ def main():
     if args.do_histograms:
         net_max_tracker.calculate_histograms(args.outdir)
 
-def save_max_tracker_per_image_to_file(filename, layer, net_max_tracker):
+def save_max_tracker_per_image_to_file(filename, net_max_tracker, layer=None):
 
     dir_name = os.path.dirname(filename)
     mkdir_p(dir_name)
 
     with WithTimer('Saving per-image maxes'):
-        with open(filename, 'wb') as ff:
-            pickle.dump(net_max_tracker.maxes_per_img, ff, -1)
+        if layer is not None:
+            with open(filename, 'wb') as ff:
+                pickle.dump(net_max_tracker.maxes_per_img[layer], ff, -1)
+        else:
+            with open(filename, 'wb') as ff:
+                pickle.dump(net_max_tracker.maxes_per_img, ff, -1)
             #for img_idx in net_max_tracker.maxes_per_img[layer]:
                 #idx = net_max_tracker.maxes_per_img[layer][img_idx][0]
                 #val = net_max_tracker.maxes_per_img[layer][img_idx][1]
