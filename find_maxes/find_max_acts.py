@@ -91,11 +91,12 @@ def save_max_tracker_per_image_to_file(filename, layer, net_max_tracker):
     mkdir_p(dir_name)
 
     with WithTimer('Saving per-image maxes'):
-        with open(filename, 'w') as ff:
-            for img_idx in net_max_tracker.maxes_per_img[layer]:
-                idx = net_max_tracker.maxes_per_img[layer][img_idx][0]
-                val = net_max_tracker.maxes_per_img[layer][img_idx][1]
-                ff.write("%d:\t%d\t%f\n" % (img_idx, idx, val))
+        with open(filename, 'wb') as ff:
+            pickle.dump(net_max_tracker.maxes_per_img, ff, -1)
+            #for img_idx in net_max_tracker.maxes_per_img[layer]:
+                #idx = net_max_tracker.maxes_per_img[layer][img_idx][0]
+                #val = net_max_tracker.maxes_per_img[layer][img_idx][1]
+                #ff.write("%d:\t%d\t%f\n" % (img_idx, idx, val))
 
 def save_max_tracker_to_file(filename, net_max_tracker):
 
