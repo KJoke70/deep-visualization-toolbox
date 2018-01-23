@@ -96,8 +96,9 @@ def save_image_list_to_file(filename, image_list):
 
     with WithTimer('Saving image list'):
         with open(filename, 'wt') as ff:
-            for i in xrange(len(image_list)):
-                ff.write("%d\t%s" % (i, image_list[i]))
+            ff.writelines(image_list)
+            #for i in xrange(len(image_list)):
+            #    ff.write("%d\t%s" % (i, image_list[i]))
 
 def save_max_tracker_per_image_to_file(filename, net_max_tracker, layer=None):
 
