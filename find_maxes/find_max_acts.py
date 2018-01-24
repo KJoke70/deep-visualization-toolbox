@@ -29,7 +29,10 @@ def pickle_to_text(pickle_filename):
     with open(pickle_filename, 'rb') as pickle_file:
         data = pickle.load(pickle_file)
 
-    data_dict = data.__dict__.copy()
+    if type(data) == type(dict()):
+        data_dict = data.copy()
+    else:
+        data_dict = data.__dict__.copy()
 
     with open(pickle_filename + ".txt", 'wt') as text_file:
         text_file.write(str(data_dict))
@@ -78,7 +81,7 @@ def main():
     save_max_tracker_to_file(args.outfile, net_max_tracker)
 
     for l in settings.layers_to_output_in_offline_scripts:
-        save_max_tracker_per_image_to_file(os.path.join(args.outdir, 'max-activations.pickled'), net_max_t
+        save_max_tracker_per_image_to_file(os.path.join(args.outdir, 'max-activations.pickled'), net_max_tracker)
         #if len(settings.layers_to_output_in_offline_scripts) == 1:
         #    save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.pickled'), net_max_tracker, layer=l)
         #else:
@@ -112,11 +115,11 @@ def save_max_tracker_per_image_to_file(filename, net_max_tracker, layer=None):
         if layer is not None:
             with open(filename, 'wb') as ff:
                 pickle.dump(net_max_tracker.maxes_per_img[layer], ff, -1)
-            #pickle_to_text(filename)
+            pickle_to_text(filename)
         else:
             with open(filename, 'wb') as ff:
                 pickle.dump(net_max_tracker.maxes_per_img, ff, -1)
-            #pickle_to_text(filename)
+            pickle_to_text(filename)
 
 def save_max_tracker_to_file(filename, net_max_tracker):
 
