@@ -103,17 +103,25 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
             nr_tops.append(t)
 
     mkdir_p(outdir)
-    
+
+    # created axes and ylim for plot    
     if mult_layers:
-        for i in xrange(len(nr_tops)):
-            pass
+        min_y = 1.0
+        max_y = 0.0
+        for l in nr_tops:
+            temp_min = min(nr_tops_ordered[l] + nr_tops[l])
+            temp_max = max(nr_tops_ordered[l] + nr_tops[l])
+            if temp_min < min_y:
+                min_y = temp_min
+            if temp_max > max_y:
+                max_y = temp_max
     else:
         min_y = min(nr_tops_ordered + nr_tops)
         max_y = max(nr_tops_ordered + nr_tops)
-        abs_diff = abs(max_y - min_y)
-        min_y -= abs_diff / float(top_n)
-        max_y += abs_diff / float(top_n)
-        y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
+    abs_diff = abs(max_y - min_y)
+    min_y -= abs_diff / float(top_n)
+    max_y += abs_diff / float(top_n)
+    y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
 
     
     def plot_data(y_data, filename, title, x_label = 'Top-N', y_label = 'precentage equal', x_data = x_axis, x_axis = x_axis, y_axis = y_axis, min_y = min_y, max_y = max_y):
@@ -130,6 +138,7 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
         for i,j in zip(x_data, y_data):
             ax.annotate("%.3f" % j,xy=(i,j))
         plt.savefig(filename, dpi=300)
+
     if mult_layers:
         for l in nr_tops_ordered:
             plot_data(nr_tops_ordered[l], os.path.join(outdir, l + '_nr_tops_ordered.png'), 'Equal units with considering order\nlayer: ' + l)
@@ -138,8 +147,24 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
         plot_data(nr_tops_ordered, os.path.join(outdir, 'nr_tops_ordered.png'), 'Equal units with considering order')
         plot_data(nr_tops, os.path.join(outdir, 'nr_tops.png'), 'Equal units with considering order')
 
+    count = count_indices(indices_ordered)
+    for i in count[9]:
+        print i, '--', count[9][i]
+#    print xxx
+    #print indices    
             
-    
+def count_indices(indices):
+    """ returns array with [{unit_idx : occurences}, ...] for [0;top_n[ """
+    count = []
+    for n in xrange(len(indices)):
+        count.append(dict())
+        for img_idx in xrange(len(indices[n])):
+            for key in indices[n][img_idx]:
+                if key in count:
+                    count[n][key] += 1
+                else:
+                    count[n][key] = 1
+    return count
 
 def compare_index_multiple_layers(data1, data2, order, top_n, image_names):
     # {layer : {img_idx : [(unit_idx, activation_val), ...]}}
