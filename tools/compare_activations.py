@@ -148,11 +148,10 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
         plot_data(nr_tops, os.path.join(outdir, 'nr_tops.png'), 'Equal units without considering order')
 
     # TODO no duplicates?
-    count = count_indices(indices_ordered)
-    
-    
+    count_ordered = count_indices(indices_ordered)
+    count = count_indices(indices)
 
-            
+
 def count_indices(indices):
     """ returns array with [{unit_idx : occurences}, ...] for [0;top_n[ """
     count = []
@@ -171,16 +170,15 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
     percentage_per_image = []
     number_per_image = []
     equal_indices = []
+    sums1 = []
+    sums2 = []
+    avgs1 = []
+    avgs2 = []
     percentage_sum = 0
     for img_idx in data1: 
-#        idxs1, vals1 = zip(*data1[img_idx])
-#        idxs2, vals2 = zip(*data2[img_idx])
-        # array of indices should not contain duplicates
-#        assert not check_if_contains_duplicates(idxs1)
-#        assert not check_if_contains_duplicates(idxs2)
-        
-#        nr_equal_indices, equals = compare_index_arrays(idxs1, idxs2, order, top_n)
         nr_equal_indices, equals, values1, values2 = compare_index_arrays(data1[img_idx], data2[img_idx], order, top_n)
+        sum1, sum2, avg1, avg2 = compare_values(data1[img_idx], data2[img_idx], top_n)
+
         
         equal_indices.append(equals)
         number_per_image.append(nr_equal_indices)
@@ -188,6 +186,15 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
         percentage_sum += percentage
         percentage_per_image.append(percentage)
     return percentage_sum / float(len(data1)), equal_indices
+
+def compare_values(data1, data2, top_n):
+    idxs1, vals1 = zip(*data1)
+    idxs2, vals2 = zip(*data2)
+    sum1 = sum(vals1[:top_n])
+    sum2 = sum(vals2[:top_n])
+    avg1 = np.mean(vals1[:top_n])
+    avg2 = np.mean(vals2[:top_n])
+    return sum1, sum2, avg1, avg2
 
 def compare_index_arrays(data1, data2, order, top_n):
     """ 
