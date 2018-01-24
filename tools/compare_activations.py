@@ -79,14 +79,13 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
             tops_order.append(compare_index_single_layer(data1, data2, True, i, image_names))
             tops_no_order.append(compare_index_single_layer(data1, data2, False, i, image_names))
     mkdir_p(outdir)
-
     
-    y_axis = np.linspace(0, 0.2, 20, endpoint=True)
     min_y = min(tops_order + tops_no_order)
     max_y = max(tops_order + tops_no_order)
     abs_diff = abs(max_y - min_y)
     min_y -= abs_diff / float(top_n)
     max_y += abs_diff / float(top_n)
+    y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
     
     fig, ax = plt.subplots()
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
