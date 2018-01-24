@@ -64,7 +64,7 @@ def main():
     
     generate_indices_plot(file1, file2, top_n, image_names, compare_all_layers, args.outdir)
 
-
+#TODO split into to functions -> extract_data and make_plot
 def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir): #TODO multilayer
     #overall percentage of equal indices in the top_n, with and without considering order
     if mult_layers: 
@@ -142,16 +142,16 @@ def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir)
     if mult_layers:
         for l in nr_tops_ordered:
             plot_data(nr_tops_ordered[l], os.path.join(outdir, l + '_nr_tops_ordered.png'), 'Equal units with considering order\nlayer: ' + l)
-            plot_data(nr_tops[l], os.path.join(outdir, l + '_nr_tops.png'), 'Equal units with considering order\nlayer: ' + l)
+            plot_data(nr_tops[l], os.path.join(outdir, l + '_nr_tops.png'), 'Equal units without considering order\nlayer: ' + l)
     else:
         plot_data(nr_tops_ordered, os.path.join(outdir, 'nr_tops_ordered.png'), 'Equal units with considering order')
-        plot_data(nr_tops, os.path.join(outdir, 'nr_tops.png'), 'Equal units with considering order')
+        plot_data(nr_tops, os.path.join(outdir, 'nr_tops.png'), 'Equal units without considering order')
 
+    # TODO no duplicates?
     count = count_indices(indices_ordered)
-    for i in count[9]:
-        print i, '--', count[9][i]
-#    print xxx
-    #print indices    
+    
+    
+
             
 def count_indices(indices):
     """ returns array with [{unit_idx : occurences}, ...] for [0;top_n[ """
@@ -166,10 +166,6 @@ def count_indices(indices):
                     count[n][key] = 1
     return count
 
-def compare_index_multiple_layers(data1, data2, order, top_n, image_names):
-    # {layer : {img_idx : [(unit_idx, activation_val), ...]}}
-    pass #TODO
-
 def compare_index_single_layer(data1, data2, order, top_n, image_names):
     # {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
     percentage_per_image = []
@@ -177,13 +173,15 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
     equal_indices = []
     percentage_sum = 0
     for img_idx in data1: 
-        idxs1, vals1 = zip(*data1[img_idx])
-        idxs2, vals2 = zip(*data2[img_idx])
+#        idxs1, vals1 = zip(*data1[img_idx])
+#        idxs2, vals2 = zip(*data2[img_idx])
         # array of indices should not contain duplicates
-        assert not check_if_contains_duplicates(idxs1)
-        assert not check_if_contains_duplicates(idxs2)
+#        assert not check_if_contains_duplicates(idxs1)
+#        assert not check_if_contains_duplicates(idxs2)
         
-        nr_equal_indices, equals = compare_index_arrays(idxs1, idxs2, order, top_n)
+#        nr_equal_indices, equals = compare_index_arrays(idxs1, idxs2, order, top_n)
+        nr_equal_indices, equals, values1, values2 = compare_index_arrays(data1[img_idx], data2[img_idx], order, top_n)
+        
         equal_indices.append(equals)
         number_per_image.append(nr_equal_indices)
         percentage = nr_equal_indices / float(top_n)
@@ -191,24 +189,56 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
         percentage_per_image.append(percentage)
     return percentage_sum / float(len(data1)), equal_indices
 
-def compare_index_arrays(idxs1, idxs2, order, top_n):
+def compare_index_arrays(data1, data2, order, top_n):
     """ 
-    returns 
-     1.) the number of equal elements in the first top_n entries of arr1 and arr2
-     2.) array of equal indices
+        returns 
+         1.) the number of equal elements in the first top_n entries of arr1 and arr2
+         2.) array of equal indices
     """
-    assert len(idxs1) == len(idxs2)
+    assert len(data1) == len(data2)
     nr_equals = 0
     equals = []
-    if not order:
-        idxs1 = sorted(idxs1[:top_n])
-        idxs2 = sorted(idxs2[:top_n])
-    for i in xrange(top_n):
-        if idxs1[i] == idxs2[i]:
-            nr_equals += 1
-            equals.append(idxs1[i])
+    values1 = []
+    values2 = []
+    idxs1, vals1 = zip(*data1)
+    idxs2, vals2 = zip(*data2)
+    assert not check_if_contains_duplicates(idxs1)
+    assert not check_if_contains_duplicates(idxs2)
+    if not order: 
+        for i in xrange(top_n):
+            if idxs1[i] in idxs2:
+                val2_loc = idxs2.index(idxs1[i])
+                nr_equals += 1
+                equals.append(idxs1[i])
+                values1.append(vals1[i])
+                values2.append(vals2[val2_loc])
+    else:       
+        for i in xrange(top_n):
+            if idxs1[i] == idxs2[i]:
+                nr_equals += 1
+                equals.append(idxs1[i])
+                values1.append(vals1[i])
+                values2.append(vals2[i])
 
-    return nr_equals, equals
+    return nr_equals, equals, values1, values2
+#def compare_index_arrays(idxs1, idxs2, order, top_n):
+#    """ 
+#    returns 
+#     1.) the number of equal elements in the first top_n entries of arr1 and arr2
+#     2.) array of equal indices
+#    """
+#    assert len(idxs1) == len(idxs2)
+#    nr_equals = 0
+#    equals = []
+#    if not order:
+#        idxs1 = sorted(idxs1[:top_n])
+#        idxs2 = sorted(idxs2[:top_n])
+#    for i in xrange(top_n):
+#        if idxs1[i] == idxs2[i]:
+#            nr_equals += 1
+#            equals.append(idxs1[i])
+#
+#    return nr_equals, equals
 
 def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
