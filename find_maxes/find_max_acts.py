@@ -78,7 +78,11 @@ def main():
     save_max_tracker_to_file(args.outfile, net_max_tracker)
 
     for l in settings.layers_to_output_in_offline_scripts:
-        save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.pickled'), net_max_tracker, layer=l)
+        save_max_tracker_per_image_to_file(os.path.join(args.outdir, 'max-activations.pickled'), net_max_t
+        #if len(settings.layers_to_output_in_offline_scripts) == 1:
+        #    save_max_tracker_per_image_to_file(os.path.join(args.outdir, l, l + '-max-activations.pickled'), net_max_tracker, layer=l)
+        #else:
+        #    save_max_tracker_per_image_to_file(os.path.join(args.outdir, 'max-activations.pickled'), net_max_tracker)
     
 
     image_filenames, image_labels = get_files_list(settings)
