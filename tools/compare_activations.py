@@ -1,4 +1,5 @@
 #! /usr/bin/env python2
+
 import matplotlib
 matplotlib.use('Agg')
 
@@ -64,63 +65,80 @@ def main():
     generate_indices_plot(file1, file2, top_n, image_names, compare_all_layers, args.outdir)
 
 
-def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir):
+def generate_indices_plot(data1, data2, top_n, image_names, mult_layers, outdir): #TODO multilayer
     #overall percentage of equal indices in the top_n, with and without considering order
-    tops_order = []
-    tops_no_order= []
+    if mult_layers: 
+        nr_tops_ordered = dict()
+        nr_tops = dict()
+        indices_ordered = dict()
+        indices = dict()
+
+    else:
+        nr_tops_ordered = []
+        nr_tops = []
+        indices_ordered = []
+        indices = []
+        
     x_axis = np.arange(1, top_n + 1, 1)
     for i in x_axis:
         if mult_layers:
-            # returns arrays of plots #TODO
-            #tops_order.append(compare_index_multiple_layer(data1, data2, True, top_n, image_names))
-            #tops_no_order.append(compare_index_multiple_layer(data1, data2, False, top_n, image_names))
-            pass #TODO
+            for l in data1:
+                nr_tops_ordered[l] = []
+                nr_tops[l] = []
+                indices_ordered[l] = []
+                indices[l] = []
+                
+                t_ord, idxs_ord = compare_index_single_layer(data1[l], data2[l], True, i, image_names)
+                t, idxs = compare_index_single_layer(data1[l], data2[l], False, i, image_names)
+                indices_ordered[l].append(idxs_ord)
+                indices[l].append(idxs)  
+                nr_tops_ordered[l].append(t_ord)
+                nr_tops[l].append(t)
         else:
-            tops_order.append(compare_index_single_layer(data1, data2, True, i, image_names))
-            tops_no_order.append(compare_index_single_layer(data1, data2, False, i, image_names))
+            t_ord, idxs_ord = compare_index_single_layer(data1, data2, True, i, image_names)
+            t, idxs = compare_index_single_layer(data1, data2, False, i, image_names)
+            indices_ordered.append(idxs_ord)
+            indices.append(idxs)            
+            nr_tops_ordered.append(t_ord)
+            nr_tops.append(t)
+
     mkdir_p(outdir)
     
-    min_y = min(tops_order + tops_no_order)
-    max_y = max(tops_order + tops_no_order)
-    abs_diff = abs(max_y - min_y)
-    min_y -= abs_diff / float(top_n)
-    max_y += abs_diff / float(top_n)
-    y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
+    if mult_layers:
+        for i in xrange(len(nr_tops)):
+            pass
+    else:
+        min_y = min(nr_tops_ordered + nr_tops)
+        max_y = max(nr_tops_ordered + nr_tops)
+        abs_diff = abs(max_y - min_y)
+        min_y -= abs_diff / float(top_n)
+        max_y += abs_diff / float(top_n)
+        y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
+
     
-    fig, ax = plt.subplots()
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-    plt.title('Equal units with order')
-    plt.xticks(x_axis)
-    plt.yticks(y_axis)
-    plt.ylim(min_y, max_y)
-    plt.xlabel('Top-N')
-    plt.ylabel('precentage equal')
-    plt.grid(True)
-    plt.plot(x_axis, tops_order, 'ro')
-    for i,j in zip(x_axis, tops_order):
-        ax.annotate("%.3f" % j,xy=(i,j))
-    plt.savefig(os.path.join(outdir, 'tops_order.png'))
-    
-    fig, ax = plt.subplots()
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-    plt.title('Equal units without order')
-    plt.xticks(x_axis)
-    plt.yticks(y_axis)
-    plt.ylim(min_y, max_y)
-    plt.xlabel('Top-N')
-    plt.ylabel('precentage equal')
-    plt.grid(True)
-    plt.plot(x_axis, tops_no_order, 'ro')
-    for i,j in zip(x_axis, tops_no_order):
-        ax.annotate("%.3f" % j,xy=(i,j))
-    plt.savefig(os.path.join(outdir, 'tops_no_order.png'))
-    
-    #f2 = plt.figure(2)
-    #plt.plot(x_axis, tops_no_order)
-    #plt.savefig(os.path.join(outdir, 'top_no_order.png'))
-#    plot_order = plt.plot(x_axis, tops_order)
-#    plot_no_order = plt.plot(x_axis, tops_no_order)
-    
+    def plot_data(y_data, filename, title, x_label = 'Top-N', y_label = 'precentage equal', x_data = x_axis, x_axis = x_axis, y_axis = y_axis, min_y = min_y, max_y = max_y):
+        fig, ax = plt.subplots()
+        ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        plt.title(title)
+        plt.xticks(x_axis)
+        plt.yticks(y_axis)
+        plt.ylim(min_y, max_y)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.grid(True)
+        plt.plot(x_data, y_data, 'ro')
+        for i,j in zip(x_data, y_data):
+            ax.annotate("%.3f" % j,xy=(i,j))
+        plt.savefig(filename, dpi=300)
+    if mult_layers:
+        for l in nr_tops_ordered:
+            plot_data(nr_tops_ordered[l], os.path.join(outdir, l + '_nr_tops_ordered.png'), 'Equal units with considering order\nlayer: ' + l)
+            plot_data(nr_tops[l], os.path.join(outdir, l + '_nr_tops.png'), 'Equal units with considering order\nlayer: ' + l)
+    else:
+        plot_data(nr_tops_ordered, os.path.join(outdir, 'nr_tops_ordered.png'), 'Equal units with considering order')
+        plot_data(nr_tops, os.path.join(outdir, 'nr_tops.png'), 'Equal units with considering order')
+
+            
     
 
 def compare_index_multiple_layers(data1, data2, order, top_n, image_names):
@@ -131,6 +149,7 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
     # {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
     percentage_per_image = []
     number_per_image = []
+    equal_indices = []
     percentage_sum = 0
     for img_idx in data1: 
         idxs1, vals1 = zip(*data1[img_idx])
@@ -138,25 +157,33 @@ def compare_index_single_layer(data1, data2, order, top_n, image_names):
         # array of indices should not contain duplicates
         assert not check_if_contains_duplicates(idxs1)
         assert not check_if_contains_duplicates(idxs2)
-        equal_indices = compare_index_arrays(idxs1, idxs2, order, top_n)
-        number_per_image.append(equal_indices)
-        percentage = equal_indices / float(top_n)
+        
+        nr_equal_indices, equals = compare_index_arrays(idxs1, idxs2, order, top_n)
+        equal_indices.append(equals)
+        number_per_image.append(nr_equal_indices)
+        percentage = nr_equal_indices / float(top_n)
         percentage_sum += percentage
         percentage_per_image.append(percentage)
-    return percentage_sum / float(len(data1))
+    return percentage_sum / float(len(data1)), equal_indices
 
 def compare_index_arrays(idxs1, idxs2, order, top_n):
-    """ returns the number of equal elements in the first top_n entries of arr1 and arr2 """
+    """ 
+    returns 
+     1.) the number of equal elements in the first top_n entries of arr1 and arr2
+     2.) array of equal indices
+    """
     assert len(idxs1) == len(idxs2)
-    equals = 0
+    nr_equals = 0
+    equals = []
     if not order:
         idxs1 = sorted(idxs1[:top_n])
         idxs2 = sorted(idxs2[:top_n])
     for i in xrange(top_n):
         if idxs1[i] == idxs2[i]:
-            equals += 1
+            nr_equals += 1
+            equals.append(idxs1[i])
 
-    return equals
+    return nr_equals, equals
 
 def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
