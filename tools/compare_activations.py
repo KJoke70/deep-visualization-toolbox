@@ -101,6 +101,7 @@ def generate_indices_plot(data1, data2, top_n, image_names, outdir):
 
     
     def plot_data(y_data, filename, title, x_label = 'Top-N', y_label = 'precentage equal', x_data = x_axis, x_axis = x_axis, y_axis = y_axis, min_y = min_y, max_y = max_y):
+        plt.clf()        
         fig, ax = plt.subplots()
         ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
         plt.title(title)
@@ -113,7 +114,46 @@ def generate_indices_plot(data1, data2, top_n, image_names, outdir):
         plt.plot(x_data, y_data, 'ro')
         for i,j in zip(x_data, y_data):
             ax.annotate("%.3f" % j,xy=(i,j))
-        plt.savefig(filename, dpi=300)
+        plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+
+    def plot_count_histogram(x_data, y_data1, y_data2, filename, title, legend_1, legend_2, x_label = 'occurrences in top-'+ str(top_n) + ' activations', y_label = 'Unit', best = 50):
+
+        # https://stackoverflow.com/questions/13070461/get-index-of-the-top-n-values-of-a-list-in-python
+        best_n_indices = sorted(range(len(y_data1)), key=lambda i: y_data1[i], reverse=True)[:best] + sorted(range(len(y_data2)), key=lambda i: y_data2[i], reverse=True)[:best]
+        best_n_indices = sorted(list(set(best_n_indices)))
+        
+        x = []
+        d1 = []
+        d2 = []
+        
+        for ind in best_n_indices:
+            x.append(str(x_data[ind]))
+            d1.append(y_data1[ind])
+            d2.append(y_data2[ind])
+        x_ind = np.arange(len(x))
+                
+        fontsize2use = 6
+        width = 1
+        
+        plt.clf()
+        fig, ax = plt.subplots(figsize=(10, 8 * (best/10)))
+        ax.barh(x_ind, d1, width, color="blue", alpha = 0.6, label = legend_1)
+        ax.barh(x_ind, d2, width, color="red", alpha = 0.6, label = legend_2)
+        
+        plt.title(title + '\n(best ' + str(best) + ')')
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.legend(loc='upper right')
+        
+        ax.set_yticks(x_ind + width/2)
+        ax.set_yticklabels(x, minor=False, fontsize=fontsize2use)
+        
+        for i, v in enumerate(d1):
+            ax.text(v + 3, i - .3, str(v), fontsize=fontsize2use)
+        for i, v in enumerate(d2):
+            ax.text(v + 3, i + .1, str(v), fontsize=fontsize2use)
+        
+        plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
 
     for l in nr_tops_ordered:
         plot_data(nr_tops_ordered[l], os.path.join(outdir, l + '_nr_tops_ordered.png'), 'Equal units with considering order\nlayer: ' + l)
@@ -122,15 +162,11 @@ def generate_indices_plot(data1, data2, top_n, image_names, outdir):
     # TODO no duplicates?
     count1 = count_indices(data1, top_n)
     count2 = count_indices(data2, top_n)
+    
     for l in count1:
-        for c in count1[l]:
-            print l, ':', c, ':', count1[l][c]
-    
-    print'-'*30
-    
-    for l in count2:
-        for c in count2[l]:
-            print l, ':', c, ':', count2[l][c]
+        hist_x, count1_y, count2_y = combine_counts(count1[l], count2[l])
+        plot_count_histogram(hist_x, count1_y, count2_y, os.path.join(outdir, l + 'count_hist_top_' + str(top_n) + '.png'), 'distribution of activations', 'vgg', 'vgg_flickrlogos')
+
 
 def count_indices(data, top_n):
     """ 
@@ -150,13 +186,40 @@ def count_indices(data, top_n):
 
     return count
 
+def combine_counts(count1, count2):
+    """
+    inserts {unit_idx : 0} in count1 and count2 if unit_idx is missing
+    returns list of unit_idx and corresponding count values
+    """
+    for key in count1:
+        if key not in count2:
+            count2[key] = 0
+            
+    for key in count2:
+        if key not in count1:
+            count1[key] = 0
+
+    x_data1, y_data1 = zip(*count1.items())
+    x_data2, y_data2 = zip(*count2.items())
+    
+    comb1 = [(x,_) for _,x in sorted(zip(x_data1,y_data1))]
+    comb2 = [(x,_) for _,x in sorted(zip(x_data2,y_data2))]
+    
+    
+    y1, x1 = zip(*comb1)
+    y2, x2 = zip(*comb2)    
+    
+    assert x1 == x2
+    return list(x1), list(y1), list(y2)
+
 def compare_counts(count1, count2):
-    pass
+    pass #TODO
 
 def find_top_n(data, top_n = 10):
     """
     data: {layer : {unit_idx : count,...}}
     """
+    pass #TODO
     
 
 def compare_index_single_layer(data1, data2, order, top_n, image_names):
