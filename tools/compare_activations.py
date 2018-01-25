@@ -131,24 +131,10 @@ def generate_indices_plot(data1, data2, top_n, image_names, outdir):
     for l in count2:
         for c in count2[l]:
             print l, ':', c, ':', count2[l][c]
-    #count_ordered = count_indices(indices_ordered)
-    #count = count_indices(indices)
 
-
-#def count_indices(indices):
-#    """ returns array with [{unit_idx : occurences}, ...] for [0;top_n[ """
-#    count = []
-#    for n in xrange(len(indices)):
-#        count.append(dict())
-#        for img_idx in xrange(len(indices[n])):
-#            for key in indices[n][img_idx]:
-#                if key in count:
-#                    count[n][key] += 1
-#                else:
-#                    count[n][key] = 1
-#    return count
 def count_indices(data, top_n):
     """ 
+    Counts the occurences of units in the top_n activations
     data: {layer : { img_idx : [(unit_idx, val), ... ]}}
     returns: {layer : {unit_idx : count, ...}}
     """
@@ -163,6 +149,15 @@ def count_indices(data, top_n):
                     count[layer][unit] = 1
 
     return count
+
+def compare_counts(count1, count2):
+    pass
+
+def find_top_n(data, top_n = 10):
+    """
+    data: {layer : {unit_idx : count,...}}
+    """
+    
 
 def compare_index_single_layer(data1, data2, order, top_n, image_names):
     # {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
