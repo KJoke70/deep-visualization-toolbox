@@ -70,14 +70,14 @@ def evaluate_data(extracted_data, top_n, outdir):
     for l in extracted_data:
         plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_perc_equal_tops_ordered.png'))
         plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_perc_equal_tops_unordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_top_n_activation_values_ordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_top_n_activation_values_unordered.png'))
-        plot_activation_difference2(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_ordered.png'))
-        plot_activation_difference2(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_unordered.png'))
+        plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_ordered.png'))
+        plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_unordered.png'))
     
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
-
+    """
+    plots a graph to show what portion of unit indices remain the same within the top-N activations of both networks
+    """
     x_label = 'Top-N'
     y_label = 'Portion Of Equal Indices In Top-N'
     x_axis = np.arange(1, top_n + 1, 1)
@@ -107,68 +107,9 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
 
 def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
-
-    count = 0
-    sum1 = 0
-    sum2 = 0
-    diff_per_img = dict()
-    total_diff = 0
-    diffs = []
-
-    for n in xrange(len(data)):
-        for img_idx in data[n]:
-            diff_per_img[img_idx] = []
-            for info in data[n][img_idx]['equals']:
-                diff = info[1] - info[2] #vgg - vgg_flickrlogos -> 
-                sum1 += info[1]
-                sum2 += info[2]
-                count += 1
-                total_diff += diff
-                diff_per_img[img_idx].append(diff)
-                diffs.append(diff)
-
-    avg1 = sum1 / count
-    avg2 = sum2 / count
-
-    avg_diff = np.mean(diffs)
-
-    d1 = [avg1, 0]
-    d2 = [0, avg2]
-
-    x_label = [bar_1, bar_2]
-    x_axis = np.arange(len(x_label))
-    y_label = 'Average Activation Value'
-
-    width = 1
-
-    plt.clf()
-    fig, ax = plt.subplots()
-
-    p1 = ax.bar(x_axis, d1, width, color='blue', edgecolor='white')
-    p2 = ax.bar(x_axis, d2, width, color='red', edgecolor='white')
-
-    plt.title(title)
-    plt.ylabel('Average Activation In Both Network\'s Top-' + str(top_n) + ' Units')
-    plt.xlabel('Network\nAverage Diff: %.3f' % avg_diff)
-    
-    max_y = max(avg1, avg2)
-    max_y += 20 - (max_y % 10)
-    y_ticks = np.linspace(0, max_y, 11, endpoint=True)
-    ax.set_yticks(y_ticks, minor = False)
-    ax.set_xticks(x_axis)
-    ax.set_xticklabels(x_label, minor=False)
-    
-    for i, j in enumerate(d1):
-        if j != 0:
-            ax.annotate("%.3f" % j, xy=(i - 0.5, j + 3))
-    for i, j in enumerate(d2):
-        if j != 0:
-            ax.annotate("%.3f" % j, xy=(i - 0.5, j + 3))
-    
-    plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
-
-def plot_activation_difference2(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
-
+    """
+    plots a bar chart comparing the average activation values of the 2 networks
+    """
     width = 1
     plt.clf()
     fig, ax = plt.subplots()
