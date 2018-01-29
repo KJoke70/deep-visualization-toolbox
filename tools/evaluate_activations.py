@@ -78,11 +78,18 @@ def plot_index_data(percentages, top_n, title, filename, min_y = 0.0, max_y = 1.
     y_label = 'Portion of equal indices in Top-N'
     x_axis = np.arange(1, top_n + 1, 1)
 
-    y_axis = np.linspace(min_y, max_y, top_n, endpoint=True)
+    abs_diff = abs(max_y - min_y)
+    if min_y > 0.0:
+        min_y -= abs_diff / float(top_n)
+    if max_y < 1.0:
+        max_y += abs_diff / float(top_n)
+
+    y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
+
 
     plt.clf()
     fig, ax = plt.subplots()
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.title(title)
     plt.xticks(x_axis)
     plt.yticks(y_axis)
