@@ -144,8 +144,8 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     plt.clf()
     fig, ax = plt.subplots()
 
-    p1 = ax.bar(x_axis, d1, width, color='blue')
-    p2 = ax.bar(x_axis, d2, width, color='red')
+    p1 = ax.bar(x_axis, d1, width, color='blue', edgecolor='white')
+    p2 = ax.bar(x_axis, d2, width, color='red', edgecolor='white')
 
     plt.title(title)
     plt.ylabel('Average Activation In Both Network\'s Top-' + str(top_n) + ' Units')
@@ -208,24 +208,28 @@ def plot_activation_difference2(data, top_n, title, filename, bar_1='vgg', bar_2
 
     ax.set_yticks(y_ticks, minor=False)
     ax.set_xticks(x_ticks + width/2)
+
     ax.set_xticklabels(x_axis, minor=False)
 
     plt.legend(loc='upper right')
     if avg_diffs[top_n - 1] < 0:
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', alpha=1)
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', alpha=1)
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white')
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white')
         ax.legend((p1[0], p2[0]), (bar_1, bar_2))
     else:
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', alpha=1)
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', alpha=1)
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white')
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white')
         ax.legend((p1[0], p2[0]), (bar_1, bar_2))
 
     
     fontsize2use = 5
     for i, j in enumerate(y1_vals):
-        ax.annotate("%.3f" % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
     for i, j in enumerate(y2_vals):
-        ax.annotate("%.3f" % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
+    
+    for i, j in enumerate(y1_vals):
+        ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 1.5), fontsize=fontsize2use, color='white')
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
 
