@@ -72,6 +72,7 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_perc_equal_tops_unordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_ordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_unordered.png'))
+        plot_count_occurences(extracted_data[l]['combined_counts'], top_n, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l + '_count_hist_top_' + str(top_n) + '.png'))
     
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
@@ -152,16 +153,13 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
 
     ax.set_xticklabels(x_axis, minor=False)
 
-    plt.legend(loc='upper right')
     if avg_diffs[top_n - 1] < 0:
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white')
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white')
-        ax.legend((p1[0], p2[0]), (bar_1, bar_2))
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2)
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1)
     else:
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white')
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white')
-        ax.legend((p1[0], p2[0]), (bar_1, bar_2))
-
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1)
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2)
+    plt.legend(loc='upper right')
     
     fontsize2use = 5
     for i, j in enumerate(y1_vals):
@@ -171,6 +169,46 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     
     for i, j in enumerate(y1_vals):
         ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 1.5), fontsize=fontsize2use, color='white')
+    
+    plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+
+def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2='vgg_flickrlogos', best=20):
+
+    x_data, y_data1, y_data2 = data
+    # https://stackoverflow.com/questions/13070461/get-index-of-the-top-n-values-of-a-list-in-python
+    best_n_indices = sorted(range(len(y_data1)), key=lambda i: y_data1[i], reverse=True)[:best] + sorted(range(len(y_data2)), key=lambda i: y_data2[i], reverse=True)[:best]
+    best_n_indices = sorted(list(set(best_n_indices)))
+    
+    x = []
+    d1 = []
+    d2 = []
+    
+    for ind in best_n_indices:
+        x.append(str(x_data[ind]))
+        d1.append(y_data1[ind])
+        d2.append(y_data2[ind])
+    x_ind = np.arange(len(x))
+            
+    fontsize2use = 6
+    width = 1
+
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(10, 8 * (best/10)))
+    ax.barh(x_ind, d1, width, color="blue", alpha = 0.6, label = legend_1, edgecolor='white')
+    ax.barh(x_ind, d2, width, color="red", alpha = 0.6, label = legend_2, edgecolor='white')
+    
+    plt.title(title + '\n(best ' + str(best) + ')')
+    plt.xlabel('Occurrences in top-'+ str(top_n) + ' activations')
+    plt.ylabel('Unit')
+    plt.legend(loc='upper right')
+    
+    ax.set_yticks(x_ind + width/2)
+    ax.set_yticklabels(x, minor=False, fontsize=fontsize2use)
+    
+    for i, v in enumerate(d1):
+        ax.text(v + 3, i - .3, str(v), fontsize=fontsize2use)
+    for i, v in enumerate(d2):
+        ax.text(v + 3, i + .1, str(v), fontsize=fontsize2use)
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
 
@@ -198,16 +236,22 @@ def extract_data(data1, data2, top_n, image_names=None):
         for n in xrange(1, top_n + 1):
             perc_o, equal_data_o = compare_indices(data1[l], data2[l], True, n)
             perc_u, equal_data_u = compare_indices(data1[l], data2[l], False, n)
+            
 
             percentages_ordered.append(perc_o)
             percentages_unordered.append(perc_u)
             equal_data_ordered.append(equal_data_o)
             equal_data_unordered.append(equal_data_u)
 
+        count1 = count_indices(data1[l], top_n)
+        count2 = count_indices(data2[l], top_n)
+
+
         result[l]['percentages_o'] = percentages_ordered
         result[l]['percentages_u'] = percentages_unordered
         result[l]['equal_ind_o'] = equal_data_ordered
         result[l]['equal_ind_u'] = equal_data_unordered
+        result[l]['combined_counts'] = combine_counts(count1, count2)
 
     return result
 
@@ -271,6 +315,47 @@ def compare_index_arrays(data1, data2, order, top_n):
 
     return nr_equals, equals, values1, values2
 
+def count_indices(data, top_n):
+    """
+    Counts the occurences of units in the top_n activations
+    data: { img_idx : [(unit_idx, val), ... ]}
+    returns: {unit_idx : count, ...}
+    """
+    count = dict()
+    for img_idx in data:
+        for unit, val in data[img_idx][:top_n]:
+            if unit in count:
+                count[unit] += 1
+            else:
+                count[unit] = 1
+
+    return count
+
+def combine_counts(count1, count2):
+    """
+    inserts {unit_idx : 0} in count1 and count2 if unit_idx is missing
+    returns list of unit_idx and corresponding count values
+    """
+    for key in count1:
+        if key not in count2:
+            count2[key] = 0
+            
+    for key in count2:
+        if key not in count1:
+            count1[key] = 0
+
+    x_data1, y_data1 = zip(*count1.items())
+    x_data2, y_data2 = zip(*count2.items())
+    
+    comb1 = [(x,_) for _,x in sorted(zip(x_data1,y_data1))]
+    comb2 = [(x,_) for _,x in sorted(zip(x_data2,y_data2))]
+    
+    
+    y1, x1 = zip(*comb1)
+    y2, x2 = zip(*comb2)    
+    
+    assert x1 == x2
+    return (list(x1), list(y1), list(y2))
 #------------------------------------------------------------------------------------------------------------------------------------
 
 def check_if_contains_duplicates(arr):
