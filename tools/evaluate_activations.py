@@ -24,6 +24,7 @@ import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 from misc import mkdir_p
+from find_maxes.find_max_acts import pickle_to_text
 from matplotlib.ticker import FormatStrFormatter
 
 def main():
@@ -53,10 +54,6 @@ def main():
     file2 = load_pickle(args.file2)
     assert len(file1) == len(file2)
 
-    # save command line parameters and execution-time in file
-    save_execution_data(args, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
-
-
     for l in file1:
         top_n = len(file1[l])
         break
@@ -65,6 +62,11 @@ def main():
 
     extracted_data = extract_data(file1, file2, top_n)
     evaluate_data(extracted_data, top_n, args.outdir)
+
+    # save extracted_data as pickled-file
+    save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
+    # save command line parameters and execution-time in file
+    save_execution_data(args, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
 
 def evaluate_data(extracted_data, top_n, outdir):
     for l in extracted_data:
@@ -79,6 +81,10 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
     plots a graph to show what portion of unit indices remain the same within the top-N activations of both networks
     """
+
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+
     x_label = 'Top-N'
     y_label = 'Portion Of Equal Indices In Top-N'
     x_axis = np.arange(1, top_n + 1, 1)
@@ -111,6 +117,10 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     """
     plots a bar chart comparing the average activation values of the 2 networks
     """
+
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+
     width = 1
     plt.clf()
     fig, ax = plt.subplots()
@@ -172,7 +182,14 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
 
+#TODO check if correct
 def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2='vgg_flickrlogos', best=20):
+    """
+    plots a bar-chart showing how often specific units appear within the top-n activations
+    """
+
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
 
     x_data, y_data1, y_data2 = data
     # https://stackoverflow.com/questions/13070461/get-index-of-the-top-n-values-of-a-list-in-python
@@ -254,7 +271,6 @@ def extract_data(data1, data2, top_n, image_names=None):
         result[l]['combined_counts'] = combine_counts(count1, count2)
 
     return result
-
 
 def compare_indices(data1, data2, order, top_n):
     """
@@ -366,6 +382,14 @@ def load_pickle(filename):
     data = pickle.load(f)
     f.close()
     return data
+
+def save_pickle(data, filename):
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+
+    with open(filename, 'wb') as ff:
+        pickle.dump(data, ff, -1)
+    pickle_to_text(filename)
 
 def save_execution_data(args, time, filename):
     dirname = os.path.dirname(filename)
