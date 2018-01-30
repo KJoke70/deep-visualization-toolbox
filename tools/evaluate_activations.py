@@ -152,9 +152,14 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
                 sum2 += info[2]
                 count += 1
                 total_diff += diff
-        y1_vals.append(sum1 / float(count))
-        y2_vals.append(sum2 / float(count))
-        avg_diffs.append(total_diff / float(count))
+        if count > 0:
+            y1_vals.append(sum1 / float(count))
+            y2_vals.append(sum2 / float(count))
+            avg_diffs.append(total_diff / float(count))
+        else:
+            y1_vals.append(0)
+            y2_vals.append(0)
+            avg_diffs.append(0)
 
     max_y = max(y1_vals + y2_vals)
     max_y += 20 - (max_y % 10)
