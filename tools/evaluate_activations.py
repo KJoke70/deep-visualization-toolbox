@@ -109,9 +109,8 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
 
     y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
 
-    fontsize2use = 5
     plt.clf()
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 10))
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.title(title)
     plt.xticks(x_axis)
@@ -122,7 +121,7 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     plt.grid(True)
     plt.plot(x_axis, percentages, 'ro')
     for i, j in zip(x_axis, percentages): #TODO source
-        ax.annotate("%.3f" % j, xy=(i, j), fontsize=fontsize2use)
+        ax.annotate("%.3f" % j, xy=(i, j))
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
 
@@ -136,7 +135,7 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
 
     width = 1
     plt.clf()
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 10))
     plt.title(title)
     plt.ylabel('Average Activation')
     plt.xlabel('Top-N')
@@ -189,14 +188,14 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
         p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2, alpha=0.5)
     plt.legend(loc='upper right')
     
-    fontsize2use = 5
     for i, j in enumerate(y1_vals):
-        ax.annotate(' %.3f' % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j), fontsize=8)
     for i, j in enumerate(y2_vals):
-        ax.annotate(' %.3f' % j, xy=(i - 0.501, j + 1), fontsize=fontsize2use)
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j), fontsize=8)
     
     for i, j in enumerate(y1_vals):
-        ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 1.5), fontsize=fontsize2use, color='white')
+        if float("%.3f" % avg_diffs[i]) != 0.000:
+            ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 0), fontsize=7, color='white')
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
@@ -225,7 +224,7 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
         d2.append(y_data2[ind])
     x_ind = np.arange(len(x))
             
-    fontsize2use = 6
+    fontsize = 6
     width = 1
 
     plt.clf()
@@ -239,12 +238,12 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
     plt.legend(loc='upper right')
     
     ax.set_yticks(x_ind + width/2)
-    ax.set_yticklabels(x, minor=False, fontsize=fontsize2use)
+    ax.set_yticklabels(x, minor=False, fontsize=fontsize)
     
     for i, v in enumerate(d1):
-        ax.text(v + 3, i - .3, str(v), fontsize=fontsize2use)
+        ax.text(v + 3, i - .3, str(v), fontsize=fontsize)
     for i, v in enumerate(d2):
-        ax.text(v + 3, i + .1, str(v), fontsize=fontsize2use)
+        ax.text(v + 3, i + .1, str(v), fontsize=fontsize)
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
