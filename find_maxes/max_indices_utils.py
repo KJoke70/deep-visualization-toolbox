@@ -1,4 +1,4 @@
-def find_top_n_idx(arr, top_n = 10):
+def find_top_n_idx(arr, top_n):
     maxes = []
     max_indices = sorted(range(len(arr)), key=lambda i: arr[i], reverse=True)[:top_n]
     for i in range(len(max_indices)):
