@@ -58,10 +58,17 @@ def main():
     
     assert len(file1) == len(file2)
 
+    min_n = 1000000
     for l in file1:
-        top_n = len(file1[l])
-        break
+        for img_idx in file1[l]:
+            if len(file1[l][img_idx]) < min_n:
+                min_n = len(file1[l][img_idx])
+            if len(file2[l][img_idx]) < min_n:
+                min_n = len(file2[l][img_idx])
+    top_n = min_n
 
+    if not (args.N <= top_n and args.N > 0):
+        print 'N==%d not possible, using N==%d' % (args.N, top_n)
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
     extracted_data = extract_data(file1, file2, top_n)
@@ -74,11 +81,11 @@ def main():
 
 def evaluate_data(extracted_data, top_n, outdir):
     for l in extracted_data:
-        plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_perc_equal_tops_ordered.png'))
-        plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_perc_equal_tops_unordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_ordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_unordered.png'))
-        plot_count_occurences(extracted_data[l]['combined_counts'], top_n, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l + '_count_hist_top_' + str(top_n) + '.png'))
+        plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_ordered.png'))
+        plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
+        plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
+        plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
+        plot_count_occurences(extracted_data[l]['combined_counts'], top_n, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(top_n) + '.png'))
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
@@ -173,11 +180,11 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     ax.set_xticklabels(x_axis, minor=False)
 
     if avg_diffs[top_n - 1] < 0:
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2)
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1)
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2, alpha=0.5)
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1, alpha=0.5)
     else:
-        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1)
-        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2)
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1, alpha=0.5)
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2, alpha=0.5)
     plt.legend(loc='upper right')
     
     fontsize2use = 5
@@ -221,8 +228,8 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
 
     plt.clf()
     fig, ax = plt.subplots(figsize=(10, 8 * (best/10)))
-    ax.barh(x_ind, d1, width, color="blue", alpha = 0.6, label = legend_1, edgecolor='white')
-    ax.barh(x_ind, d2, width, color="red", alpha = 0.6, label = legend_2, edgecolor='white')
+    ax.barh(x_ind, d1, width, color="blue", alpha = 0.5, label = legend_1, edgecolor='white')
+    ax.barh(x_ind, d2, width, color="red", alpha = 0.5, label = legend_2, edgecolor='white')
     
     plt.title(title + '\n(best ' + str(best) + ')')
     plt.xlabel('Occurrences in top-'+ str(top_n) + ' activations')
@@ -295,7 +302,6 @@ def compare_indices(data1, data2, order, top_n):
     percentage_sum = 0
     equal_data = dict()
     for img_idx in data1:
-
         equal_data[img_idx] = dict()
         nr_equal_indices, equals, values1, values2 = compare_index_arrays(data1[img_idx], data2[img_idx], order, top_n)
 
