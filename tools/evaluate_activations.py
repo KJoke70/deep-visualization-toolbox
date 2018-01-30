@@ -421,10 +421,10 @@ def save_execution_data(args, top_n, current_time, filename):
         f.write("date: %s\n" % current_time)
         for k in args.__dict__:
             f.write( "%s: %s\n" % (k, args.__dict__[k]))
-        f.write("used n: %d" % top_n)
+        f.write("used N: %d" % top_n)
         f.write("\n")
         f.write("-"*30)
-        f.write("errors:\n")
+        f.write("\nerrors:\n")
         for i in xrange(len(error_msgs)):
             f.write("%s\n" % error_msgs[i])
         f.close()
