@@ -52,6 +52,10 @@ def main():
     # or {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
     file1 = load_pickle(args.file1)
     file2 = load_pickle(args.file2)
+
+    if 'fc8_flickrlogos' in file2.keys():
+        file2['fc8'] = file2.pop('fc8_flickrlogos')
+    
     assert len(file1) == len(file2)
 
     for l in file1:
@@ -75,7 +79,6 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_ordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l + '_avg_activation_values_unordered.png'))
         plot_count_occurences(extracted_data[l]['combined_counts'], top_n, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l + '_count_hist_top_' + str(top_n) + '.png'))
-    
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
