@@ -433,7 +433,7 @@ class NetMaxTracker(object):
                 self.max_trackers[normalized_layer_name].update(blob[batch_index], image_idx, -1, net_unique_input_source, layer_name)
 
                 # saves array of top-n tuples (unit_index, activation_value) per image
-                per_img_maxes, per_img_max_indices = midx.find_top_n_idx(self.max_trackers[normalized_layer_name].all_max_vals[image_idx], self.top_n)
+                per_img_maxes, per_img_max_indices = midx.find_top_n_idx(self.max_trackers[normalized_layer_name].all_max_vals[image_idx], self.n_top)
                 self.maxes_per_img[normalized_layer_name][image_idx] = zip(per_img_max_indices, per_img_maxes)
                 
         pass
