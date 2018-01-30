@@ -27,6 +27,8 @@ from misc import mkdir_p
 from find_maxes.find_max_acts import pickle_to_text
 from matplotlib.ticker import FormatStrFormatter
 
+error_msgs = []
+
 def main():
     execution_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     parser = argparse.ArgumentParser(description='Command line arguments')
@@ -68,7 +70,7 @@ def main():
     top_n = min_n
 
     if not (args.N <= top_n and args.N > 0):
-        print 'N==%d not possible, using N==%d' % (args.N, top_n)
+        print_error('N==%d not possible, using N==%d' % (args.N, top_n))
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
     extracted_data = extract_data(file1, file2, top_n)
@@ -390,6 +392,9 @@ def combine_counts(count1, count2):
     assert x1 == x2
     return (list(x1), list(y1), list(y2))
 #------------------------------------------------------------------------------------------------------------------------------------
+def print_error(msg):
+    print msg
+    error_msgs.append(msg)
 
 def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
@@ -417,6 +422,11 @@ def save_execution_data(args, top_n, current_time, filename):
         for k in args.__dict__:
             f.write( "%s: %s\n" % (k, args.__dict__[k]))
         f.write("used n: %d" % top_n)
+        f.write("\n")
+        f.write("-"*30)
+        f.write("errors:\n")
+        for i in xrange(len(error_msgs)):
+            f.write("%s\n" % error_msgs[i])
         f.close()
 
 if __name__ == '__main__':
