@@ -87,7 +87,8 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
-        plot_count_occurences(extracted_data[l]['combined_counts'], top_n, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(top_n) + '.png'))
+        for n in xrange(top_n):
+            plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
@@ -282,7 +283,6 @@ def extract_data(data1, data2, top_n, image_names=None):
         count1 = count_indices(data1[l], top_n)
         count2 = count_indices(data2[l], top_n)
 
-
         result[l]['percentages_o'] = percentages_ordered
         result[l]['percentages_u'] = percentages_unordered
         result[l]['equal_ind_o'] = equal_data_ordered
@@ -355,13 +355,15 @@ def count_indices(data, top_n):
     data: { img_idx : [(unit_idx, val), ... ]}
     returns: {unit_idx : count, ...}
     """
-    count = dict()
-    for img_idx in data:
-        for unit, val in data[img_idx][:top_n]:
-            if unit in count:
-                count[unit] += 1
-            else:
-                count[unit] = 1
+    count = []
+    for n in xrange(top_n):
+        count.append(dict())
+        for img_idx in data:
+            for unit, val in data[img_idx][:n + 1]:
+                if unit in count[n]:
+                    count[n][unit] += 1
+                else:
+                    count[n][unit] = 1
 
     return count
 
@@ -370,26 +372,31 @@ def combine_counts(count1, count2):
     inserts {unit_idx : 0} in count1 and count2 if unit_idx is missing
     returns list of unit_idx and corresponding count values
     """
-    for key in count1:
-        if key not in count2:
-            count2[key] = 0
-            
-    for key in count2:
-        if key not in count1:
-            count1[key] = 0
+    assert len(count1) == len(count2)
+    for n in xrange(len(count1)):
+        for key in count1[n]:
+            if key not in count2[n]:
+                count2[n][key] = 0
+    
+    for n in xrange(len(count2)):
+        for key in count2[n]:
+            if key not in count1[n]:
+                count1[n][key] = 0
 
-    x_data1, y_data1 = zip(*count1.items())
-    x_data2, y_data2 = zip(*count2.items())
+    result = []
+    for n in xrange(len(count1)):
+        x_data1, y_data1 = zip(*count1[n].items())
+        x_data2, y_data2 = zip(*count2[n].items())
+        
+        comb1 = [(x,_) for _,x in sorted(zip(x_data1,y_data1))]
+        comb2 = [(x,_) for _,x in sorted(zip(x_data2,y_data2))]
+        
+        y1, x1 = zip(*comb1)
+        y2, x2 = zip(*comb2)    
     
-    comb1 = [(x,_) for _,x in sorted(zip(x_data1,y_data1))]
-    comb2 = [(x,_) for _,x in sorted(zip(x_data2,y_data2))]
-    
-    
-    y1, x1 = zip(*comb1)
-    y2, x2 = zip(*comb2)    
-    
-    assert x1 == x2
-    return (list(x1), list(y1), list(y2))
+        assert x1 == x2
+        result.append((list(x1), list(y1), list(y2)))
+    return result
 #------------------------------------------------------------------------------------------------------------------------------------
 def print_error(msg):
     print msg
