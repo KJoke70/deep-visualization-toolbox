@@ -115,6 +115,7 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     for i, j in zip(x_axis, percentages): #TODO source
         ax.annotate("%.3f" % j, xy=(i, j))
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
 
 def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
     """
@@ -189,6 +190,7 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
         ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 1.5), fontsize=fontsize2use, color='white')
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
 
 #TODO check if correct
 def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2='vgg_flickrlogos', best=20):
@@ -236,6 +238,7 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
         ax.text(v + 3, i + .1, str(v), fontsize=fontsize2use)
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
 
 def extract_data(data1, data2, top_n, image_names=None):
     """
