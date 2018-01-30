@@ -109,7 +109,7 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
 
     y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
 
-
+    fontsize2use = 5
     plt.clf()
     fig, ax = plt.subplots()
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
@@ -122,7 +122,7 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     plt.grid(True)
     plt.plot(x_axis, percentages, 'ro')
     for i, j in zip(x_axis, percentages): #TODO source
-        ax.annotate("%.3f" % j, xy=(i, j))
+        ax.annotate("%.3f" % j, xy=(i, j), fontsize=fontsize2use)
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
 
@@ -305,7 +305,7 @@ def compare_indices(data1, data2, order, top_n):
     equal_data = dict()
     for img_idx in data1:
         equal_data[img_idx] = dict()
-        nr_equal_indices, equals, values1, values2 = compare_index_arrays(data1[img_idx], data2[img_idx], order, top_n)
+        nr_equal_indices, equals, values1, values2 = compare_index_arrays(data1[img_idx][:top_n], data2[img_idx][:top_n], order, top_n)
 
         equal_data[img_idx]['number_equal'] = nr_equal_indices
         equal_data[img_idx]['equals'] = zip(equals, values1, values2) # -> (unit_idx, vals1, vals2)
@@ -328,8 +328,8 @@ def compare_index_arrays(data1, data2, order, top_n):
     equals = []
     values1 = []
     values2 = []
-    idxs1, vals1 = zip(*data1)
-    idxs2, vals2 = zip(*data2)
+    idxs1, vals1 = zip(*data1[:top_n])
+    idxs2, vals2 = zip(*data2[:top_n])
     assert not check_if_contains_duplicates(idxs1)
     assert not check_if_contains_duplicates(idxs2)
     if not order:
