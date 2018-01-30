@@ -77,7 +77,7 @@ def main():
     # save extracted_data as pickled-file
     save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
     # save command line parameters and execution-time in file
-    save_execution_data(args, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
+    save_execution_data(args, top_n, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
 
 def evaluate_data(extracted_data, top_n, outdir):
     for l in extracted_data:
@@ -408,14 +408,15 @@ def save_pickle(data, filename):
         pickle.dump(data, ff, -1)
     pickle_to_text(filename)
 
-def save_execution_data(args, time, filename):
+def save_execution_data(args, top_n, current_time, filename):
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
     with open(filename, 'wt') as f:
-        f.write("date: %s\n" % time)
+        f.write("date: %s\n" % current_time)
         for k in args.__dict__:
             f.write( "%s: %s\n" % (k, args.__dict__[k]))
+        f.write("used n: %d" % top_n)
         f.close()
 
 if __name__ == '__main__':
