@@ -462,6 +462,50 @@ def combine_counts(count1, count2):
         assert x1 == x2
         result.append((list(x1), list(y1), list(y2)))
     return result
+
+def top_n_activations(data1, data2, top_n):
+    """
+    data1, data2: {img_idx : [(unit_idx, activation_value), ...],...}
+    Returns a list of the top-n average activations over all images
+    """
+    assert len(data1) == len(data2)
+
+    # {unit_idx : [sum, count]}
+
+    count1 = []
+    count2 = []
+    avgs1 = []
+    avgs2 = []
+
+    for n in xrange(top_n):
+        count1.append(dict())
+        count2.append(dict())
+        for img_idx in data1:
+            for i in xrange(len(data1[img_idx][:n + 1])):
+                key = data1[img_idx][i][0]
+                act = data1[img_idx][i][1]
+                if key in avgs1[n]:
+                    count1[n][key][0] += act
+                    count1[n][key][1] += 1
+                else:
+                    count1[n][key] = [act, 1]
+            for j in xrange(len(data2[img_idx][:n + 1])):
+                key = data2[img_idx][i][0]
+                act = data2[img_idx][i][1]
+                if key in count2[n]:
+                    count2[n][key][0] += act
+                    count2[n][key][1] += 1
+                else:
+                    count2[n][key] = [act, 1]
+
+    for i in xrange(len(count1)):
+        avgs1.append(list())
+        avgs2.append(list())
+        # [(unit_idx, avg), ]
+        for key in count1[i]:
+            pass
+
+
 #------------------------------------------------------------------------------------------------------------------------------------
 def print_error(msg):
     print msg
