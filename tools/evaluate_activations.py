@@ -87,6 +87,8 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
+        plot_activation_difference_curve(extracted_data[l]['equal_ind_o'], top_n, 'Activation-Difference For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_ordered.png'))
+        plot_activation_difference_curve(extracted_data[l]['equal_ind_u'], top_n, 'Activation-Difference For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_unordered.png'))
         for n in xrange(top_n):
             plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
 
@@ -157,7 +159,7 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
         total_diff = 0
         for img_idx in data[i - 1]:
             for info in data[i - 1][img_idx]['equals'][:i]:
-                diff = info[1] - info[2]
+                diff = info[2] - info[1]
                 sum1 += info[1]
                 sum2 += info[2]
                 count += 1
@@ -175,8 +177,8 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     max_y += 20 - (max_y % 10)
 
     y_ticks = np.linspace(0, max_y, 11, endpoint=True)
-
     ax.set_yticks(y_ticks, minor=False)
+
     ax.set_xticks(x_ticks + width/2)
 
     ax.set_xticklabels(x_axis, minor=False)
@@ -197,6 +199,69 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     for i, j in enumerate(y1_vals):
         if float("%.3f" % avg_diffs[i]) != 0.000:
             ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 0), fontsize=7, color='white')
+    
+    plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
+
+def plot_activation_difference_curve(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
+    """
+    plots a curve comparing the average activation values of the 2 networks
+    """
+
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+
+    width = 1
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(7 * (top_n/10), 10))
+    plt.title(title)
+    plt.ylabel('Average Difference')
+    plt.xlabel('Top-N')
+    
+
+    x_axis = np.arange(1, top_n + 1, 1)
+    x_ticks = np.arange(0, top_n, 1)
+
+    y1_vals = []
+    y2_vals = []
+    avg_diffs = []
+
+
+    for i in x_axis:
+        count = 0
+        sum1 = 0
+        sum2 = 0
+        total_diff = 0
+        for img_idx in data[i - 1]:
+            for info in data[i - 1][img_idx]['equals'][:i]:
+                diff = info[2] - info[1]
+                sum1 += info[1]
+                sum2 += info[2]
+                count += 1
+                total_diff += diff
+        if count > 0:
+            avg_diffs.append(total_diff / float(count))
+        else:
+            avg_diffs.append(0)
+
+    max_y = max(avg_diffs)
+    max_y = 0 if max_y < 0 else max_y + 5 - (max_y % 5)
+    min_y = min(avg_diffs)
+    min_y -= min_y % 5
+
+    y_ticks = np.linspace(min_y, max_y, 11, endpoint=True)
+    plt.ylim(min_y, max_y)
+
+    ax.set_yticks(y_ticks, minor=True)
+
+    ax.set_xticks(x_ticks + width/2)
+    ax.set_xticklabels(x_axis, minor=False)
+
+    p = ax.plot(x_ticks, avg_diffs, '.r-', label='Difference %s - %s' % (bar_2, bar_1))
+    plt.legend(loc='upper right')
+    
+    for i, j in enumerate(avg_diffs):
+        ax.annotate('%.3f' % j, xy=(i - 0.501, j + 0.01), fontsize=8)
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
