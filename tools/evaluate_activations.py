@@ -8,6 +8,7 @@ Created on Mon Jan 29 11:03:44 2018
 
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 # add parent folder to search path, to enable import of core modules like settings
 import os, sys, inspect
@@ -18,10 +19,10 @@ sys.path.insert(0,parentdir)
 import argparse
 import cPickle as pickle
 import datetime
-import matplotlib.pyplot as plt
+
 import numpy as np
 from misc import mkdir_p
-from find_maxes.find_max_acts import pickle_to_text
+#from find_maxes.find_max_acts import pickle_to_text
 from matplotlib.ticker import FormatStrFormatter
 
 error_msgs = []
@@ -523,7 +524,7 @@ def save_pickle(data, filename):
 
     with open(filename, 'wb') as ff:
         pickle.dump(data, ff, -1)
-    pickle_to_text(filename)
+    #pickle_to_text(filename)
 
 def save_execution_data(args, top_n, current_time, filename):
     dirname = os.path.dirname(filename)
