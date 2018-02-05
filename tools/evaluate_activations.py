@@ -85,7 +85,7 @@ def main():
         pass
     else:
         extracted_data = extract_data(file1, files2[0], top_n)
-        #evaluate_data(extracted_data, top_n, args.outdir)
+        evaluate_data(extracted_data, top_n, args.outdir)
 
     # save extracted_data as pickled-file
     save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
