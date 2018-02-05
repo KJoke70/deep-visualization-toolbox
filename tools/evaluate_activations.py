@@ -108,6 +108,8 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
         plot_activation_difference_curve(extracted_data[l]['equal_ind_o'], top_n, 'Activation-Difference For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_ordered.png'))
         plot_activation_difference_curve(extracted_data[l]['equal_ind_u'], top_n, 'Activation-Difference For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_unordered.png'))
+        plot_activation_averages(extracted_data[l]['averages'], top_n, 'Activation Averages\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_averages.png'))
+
         for n in xrange(top_n):
             plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
     logging.debug('evaluate_data: end.')
@@ -153,7 +155,7 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
 
 def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
     """
-    plots a bar chart comparing the average activation values of the 2 networks
+    plots a bar chart comparing the average activation values of the 2 (same indices) networks
     """
 
     logging.debug('plot_activation_difference: start...')
@@ -295,6 +297,65 @@ def plot_activation_difference_curve(data, top_n, title, filename, bar_1='vgg', 
     plt.close()
     logging.debug('plot_activation_difference_curve: end.')
 
+def plot_activation_averages(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
+    """
+    plots a bar chart comparing the average activation values of the 2 networks
+    """
+
+    logging.debug('plot_activation_averages: start...')
+    logging.debug('plot_activation_averages: top-n=%d; title=%s, filename=%s; bar_1=%s; bar_2=%s' % (top_n, title, filename, bar_1, bar_2))
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+
+    width = 1
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 10))
+    plt.title(title)
+    plt.ylabel('Average Activation')
+    plt.xlabel('Top-N')
+    
+
+    x_axis = np.arange(1, top_n + 1, 1)
+    x_ticks = np.arange(0, top_n, 1)
+
+    y1_vals = data[0]
+    y2_vals = data[1]
+    avg_diffs = []
+
+    for i in xrange(top_n):
+        diff = y1_vals[i] - y2_vals[i]
+        avg_diffs.append(diff)
+
+    max_y = max(y1_vals + y2_vals)
+    max_y += 20 - (max_y % 10)
+
+    y_ticks = np.linspace(0, max_y, 11, endpoint=True)
+    ax.set_yticks(y_ticks, minor=False)
+
+    ax.set_xticks(x_ticks + width/2)
+
+    ax.set_xticklabels(x_axis, minor=False)
+
+    if avg_diffs[top_n - 1] < 0:
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2, alpha=0.5)
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1, alpha=0.5)
+    else:
+        p1 = ax.bar(x_ticks, y1_vals, width, color='blue', edgecolor='white', label = bar_1, alpha=0.5)
+        p2 = ax.bar(x_ticks, y2_vals, width, color='red', edgecolor='white', label = bar_2, alpha=0.5)
+    plt.legend(loc='upper right')
+    
+    for i, j in enumerate(y1_vals):
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j), fontsize=8)
+    for i, j in enumerate(y2_vals):
+        ax.annotate(' %.3f' % j, xy=(i - 0.501, j), fontsize=8)
+    
+    for i, j in enumerate(y1_vals):
+        if float("%.3f" % avg_diffs[i]) != 0.000:
+            ax.annotate(' %.3f' % avg_diffs[i], xy=(i - 0.501, 0), fontsize=7, color='white')
+    
+    plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
+    logging.debug('plot_activation_averages: end')
 #TODO check if correct
 def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2='vgg_flickrlogos', best=20):
     """
@@ -369,7 +430,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         result[l] = dict()
 
         for n in xrange(1, top_n + 1):
-            logging.debug('extract_data: for top-%d for layer %s' % (n, l))
+            logging.debug('extract_data: percentages and equal indices for top-%d for layer %s' % (n, l))
             perc_o, equal_data_o = compare_indices(data1[l], data2[l], True, n)
             perc_u, equal_data_u = compare_indices(data1[l], data2[l], False, n)
             
@@ -382,12 +443,15 @@ def extract_data(data1, data2, top_n, image_names=None):
         logging.debug('extract_data: counting indices for layer %s' % l)
         count1 = count_indices(data1[l], top_n)
         count2 = count_indices(data2[l], top_n)
+        logging.debug('extract_data: average activations for layer %s' % l)
+        avgs1, avgs2 = top_n_average(data1[l], data2[l], top_n)
 
         result[l]['percentages_o'] = percentages_ordered
         result[l]['percentages_u'] = percentages_unordered
         result[l]['equal_ind_o'] = equal_data_ordered
         result[l]['equal_ind_u'] = equal_data_unordered
         result[l]['combined_counts'] = combine_counts(count1, count2)
+        result[l]['averages'] = (avgs1, avgs2)
 
     logging.debug('extract_data: end.')
     return result
@@ -498,6 +562,39 @@ def combine_counts(count1, count2):
         assert x1 == x2
         result.append((list(x1), list(y1), list(y2)))
     return result
+
+def top_n_average(data1, data2, top_n):
+    """
+    data1, data2: {img_idx : [(unit_idx, activation_value), ...],...}
+    returns the average activation for top1 to top-n
+        avgs1[*] -> avgs for top-1 to top-N for data1
+        avgs2[*] -> avgs for top-1 to top-N for data2
+    """
+    logging.debug('top_n_average: start...')
+    logging.debug('top_n_average: top_n=%d' % top_n)
+
+    avgs1 = []
+    avgs2 = []
+    for n in xrange(1, top_n + 1):
+        sum_total1 = 0.0
+        sum_total2 = 0.0
+        avg1 = 0.0
+        avg2 = 0.0
+        for img_idx in data1:
+            sum_img1 = 0
+            sum_img2 = 0
+            for i in xrange(len(data1[img_idx][:n])):
+                sum_img1 += data1[img_idx][i][1]
+                sum_img2 += data2[img_idx][i][1]
+            sum_total1 += sum_img1/float(n)
+            sum_total2 += sum_img2/float(n)
+        avg1 = sum_total1 / float(len(data1))
+        avg2 = sum_total2 / float(len(data2))
+        avgs1.append(avg1)
+        avgs2.append(avg2)
+
+    logging.debug('top_n_average: end.')
+    return avgs1, avgs2
 
 #TODO complete function
 def top_n_activations(data1, data2, top_n):
