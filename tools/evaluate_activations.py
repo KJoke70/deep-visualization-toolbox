@@ -19,13 +19,12 @@ sys.path.insert(0,parentdir)
 import argparse
 import cPickle as pickle
 import datetime
+import logging
 
 import numpy as np
 from misc import mkdir_p
 #from find_maxes.find_max_acts import pickle_to_text
 from matplotlib.ticker import FormatStrFormatter
-
-error_msgs = []
 
 def main():
     execution_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -33,7 +32,6 @@ def main():
     parser.add_argument('file1', type = str, help = 'First file with information to plot')
     parser.add_argument('file2', nargs='+', help = 'Second file with information to plot. Multiple files for comparison over time.')
     parser.add_argument('--N', type = int, default = None, help = 'compare top N, if None all within file will be used')
-    parser.add_argument('--order', type = bool, default = True, help = 'consider order within top-N?' )
     parser.add_argument('--image_names', type = str, default = None, help = 'a list with all image filenames in the order they were used' )
     parser.add_argument('--outdir', type = str, default = os.path.join(currentdir, 'results', 'comp-' + execution_time), help = 'First file with information to plot')
 
@@ -49,6 +47,14 @@ def main():
             image_names = f.readlines()
             image_names = [x.strip() for x in image_names]
 
+    mkdir_p(args.outdir)
+    logging.basicConfig(filename=os.path.join(args.outdir, 'execution_log.log'), level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.debug('INFO: file1=%s' % args.file1)
+    for i in xrange(len(args.file2)):
+        logging.debug('INFO: files2[%i]=%s' % (i, args.file2[i]))
+    logging.debug('INFO: N=%d', args.N)
+    logging.debug('INFO: image_names=%s' % args.image_names)
+    logging.debug('INFO: outdir=%s' % args.outdir)
 
     # pickle either contains {layer : {img_idx : [(unit_idx, activation_val), ...]}}
     # or {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
@@ -78,10 +84,10 @@ def main():
     top_n = min_n
 
     if not (args.N <= top_n and args.N > 0):
-        print_error('N==%d not possible, using N==%d' % (args.N, top_n))
+        logging.warning('N==%d not possible, using N==%d' % (args.N, top_n))
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
-    if len(files2) > 1:
+    if len(files2) > 1:#TODO
         pass
     else:
         extracted_data = extract_data(file1, files2[0], top_n)
@@ -93,7 +99,9 @@ def main():
     save_execution_data(args, top_n, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
 
 def evaluate_data(extracted_data, top_n, outdir):
+    logging.debug('evaluate_data: start...')
     for l in extracted_data:
+        logging.debug('evaluate_data: for layer %s' % l)
         plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_ordered.png'))
         plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
         plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
@@ -102,12 +110,15 @@ def evaluate_data(extracted_data, top_n, outdir):
         plot_activation_difference_curve(extracted_data[l]['equal_ind_u'], top_n, 'Activation-Difference For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_unordered.png'))
         for n in xrange(top_n):
             plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
+    logging.debug('evaluate_data: end.')
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
     plots a graph to show what portion of unit indices remain the same within the top-N activations of both networks
     """
 
+    logging.debug('plot_index_data: start...')
+    logging.debug('plot_index_data: top-n=%d; title=%s; filename=%s; min_y=%f; max_y=%f' % (top_n, title, filename, min_y, max_y))
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
@@ -138,12 +149,15 @@ def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
         ax.annotate("%.3f" % j, xy=(i, j))
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
+    logging.debug('plot_index_data: end')
 
 def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
     """
     plots a bar chart comparing the average activation values of the 2 networks
     """
 
+    logging.debug('plot_activation_difference: start...')
+    logging.debug('plot_activation_difference: top-n=%d; title=%s, filename=%s; bar_1=%s; bar_2=%s' % (top_n, title, filename, bar_1, bar_2))
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
@@ -213,12 +227,15 @@ def plot_activation_difference(data, top_n, title, filename, bar_1='vgg', bar_2=
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
+    logging.debug('plot_activation_difference: end')
 
 def plot_activation_difference_curve(data, top_n, title, filename, bar_1='vgg', bar_2='vgg_flickrlogos'):
     """
     plots a curve comparing the average activation values of the 2 networks
     """
 
+    logging.debug('plot_activation_difference_curve: start')
+    logging.debug('plot_activation_difference_curve: top-n=%d; title=%s, filename=%s; bar_1=%s; bar_2=%s' % (top_n, title, filename, bar_1, bar_2))
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
@@ -276,6 +293,7 @@ def plot_activation_difference_curve(data, top_n, title, filename, bar_1='vgg', 
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
+    logging.debug('plot_activation_difference_curve: end.')
 
 #TODO check if correct
 def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2='vgg_flickrlogos', best=20):
@@ -283,6 +301,8 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
     plots a bar-chart showing how often specific units appear within the top-n activations
     """
 
+    logging.debug('plot_count_occurences: start...')
+    logging.debug('plot_count_occurences: top-n=%d; title=%s, filename=%s; legend_1:%s; legend_2:%s; best=%d' % (top_n, title, filename, legend_1, legend_2, best))
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
@@ -324,6 +344,7 @@ def plot_count_occurences(data, top_n, title, filename, legend_1='vgg', legend_2
     
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
+    logging.debug('plot_count_occurences: end.')
 
 def extract_data(data1, data2, top_n, image_names=None):
     """
@@ -335,11 +356,12 @@ def extract_data(data1, data2, top_n, image_names=None):
         percentage of equal indices (considering top-N order and without)
         unit-indices contained in the top-N in data1 and data2 (considering top-N order and without)
     """
-
+    logging.debug('extract_data: starting...')
     result = dict()
 
 
     for l in data1:
+        logging.debug('extract_data: for layer %s' % l)
         percentages_ordered = []
         percentages_unordered = []
         equal_data_ordered = []
@@ -347,6 +369,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         result[l] = dict()
 
         for n in xrange(1, top_n + 1):
+            logging.debug('extract_data: for top-%d for layer %s' % (n, l))
             perc_o, equal_data_o = compare_indices(data1[l], data2[l], True, n)
             perc_u, equal_data_u = compare_indices(data1[l], data2[l], False, n)
             
@@ -356,6 +379,7 @@ def extract_data(data1, data2, top_n, image_names=None):
             equal_data_ordered.append(equal_data_o)
             equal_data_unordered.append(equal_data_u)
 
+        logging.debug('extract_data: counting indices for layer %s' % l)
         count1 = count_indices(data1[l], top_n)
         count2 = count_indices(data2[l], top_n)
 
@@ -365,6 +389,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         result[l]['equal_ind_u'] = equal_data_unordered
         result[l]['combined_counts'] = combine_counts(count1, count2)
 
+    logging.debug('extract_data: end.')
     return result
 
 def compare_indices(data1, data2, order, top_n):
@@ -474,6 +499,7 @@ def combine_counts(count1, count2):
         result.append((list(x1), list(y1), list(y2)))
     return result
 
+#TODO complete function
 def top_n_activations(data1, data2, top_n):
     """
     data1, data2: {img_idx : [(unit_idx, activation_value), ...],...}
@@ -514,14 +540,9 @@ def top_n_activations(data1, data2, top_n):
         avgs2.append(list())
         # [(unit_idx, avg), ]
         for key in count1[i]:
-            pass
-
+            pass #TODO
 
 #------------------------------------------------------------------------------------------------------------------------------------
-def print_error(msg):
-    print msg
-    error_msgs.append(msg)
-
 def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
 
@@ -548,11 +569,6 @@ def save_execution_data(args, top_n, current_time, filename):
         for k in args.__dict__:
             f.write( "%s: %s\n" % (k, args.__dict__[k]))
         f.write("used N: %d" % top_n)
-        f.write("\n")
-        f.write("-"*30)
-        f.write("\nerrors:\n")
-        for i in xrange(len(error_msgs)):
-            f.write("%s\n" % error_msgs[i])
         f.close()
 
 if __name__ == '__main__':
