@@ -31,7 +31,7 @@ def main():
     execution_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     parser = argparse.ArgumentParser(description='Command line arguments')
     parser.add_argument('file1', type = str, help = 'First file with information to plot')
-    parser.add_argument('file2', type = str, help = 'First file with information to plot')
+    parser.add_argument('file2', nargs='+', help = 'Second file with information to plot. Multiple files for comparison over time.')
     parser.add_argument('--N', type = int, default = None, help = 'compare top N, if None all within file will be used')
     parser.add_argument('--order', type = bool, default = True, help = 'consider order within top-N?' )
     parser.add_argument('--image_names', type = str, default = None, help = 'a list with all image filenames in the order they were used' )
@@ -40,7 +40,9 @@ def main():
     args = parser.parse_args()
 
     assert os.path.exists(args.file1)
-    assert os.path.exists(args.file2)
+    if len(args.file2) > 1:
+        for p in args.file2:
+            assert os.path.exists(p)
     if not args.image_names == None:
         assert os.path.exists(args.image_names)
         with open(args.image_names) as f:
@@ -51,28 +53,39 @@ def main():
     # pickle either contains {layer : {img_idx : [(unit_idx, activation_val), ...]}}
     # or {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
     file1 = load_pickle(args.file1)
-    file2 = load_pickle(args.file2)
+    files2 = []
+    for p in args.file2:
+        files2.append(load_pickle(p))
 
-    if 'fc8_flickrlogos' in file2.keys():
-        file2['fc8'] = file2.pop('fc8_flickrlogos')
-    
-    assert len(file1) == len(file2)
+    # rename folders to match first file
+    # TODO make configurable
+    for i in xrange(len(files2)):
+        if 'fc8_flickrlogos' in files2[i].keys():
+            files2[i]['fc8'] = files2[i].pop('fc8_flickrlogos')
+            assert len(file1) == len(files2[i])
 
     min_n = 1000000
     for l in file1:
         for img_idx in file1[l]:
             if len(file1[l][img_idx]) < min_n:
                 min_n = len(file1[l][img_idx])
-            if len(file2[l][img_idx]) < min_n:
-                min_n = len(file2[l][img_idx])
+
+    for i in xrange(len(files2)):
+        for l in files2[i]:
+            for img_idx in files2[i][l]:
+                if len(files2[i][l][img_idx]) < min_n:
+                    min_n = len(files2[i][l][img_idx])
     top_n = min_n
 
     if not (args.N <= top_n and args.N > 0):
         print_error('N==%d not possible, using N==%d' % (args.N, top_n))
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
-    extracted_data = extract_data(file1, file2, top_n)
-    evaluate_data(extracted_data, top_n, args.outdir)
+    if len(files2) > 1:
+        pass
+    else:
+        extracted_data = extract_data(file1, files2[0], top_n)
+        #evaluate_data(extracted_data, top_n, args.outdir)
 
     # save extracted_data as pickled-file
     save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
