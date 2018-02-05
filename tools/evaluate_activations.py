@@ -49,12 +49,12 @@ def main():
 
     mkdir_p(args.outdir)
     logging.basicConfig(filename=os.path.join(args.outdir, 'execution_log.log'), level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.debug('INFO: file1=%s' % args.file1)
+    logging.info('file1=%s' % args.file1)
     for i in xrange(len(args.file2)):
-        logging.debug('INFO: files2[%i]=%s' % (i, args.file2[i]))
-    logging.debug('INFO: N=%d', args.N)
-    logging.debug('INFO: image_names=%s' % args.image_names)
-    logging.debug('INFO: outdir=%s' % args.outdir)
+        logging.info('files2[%i]=%s' % (i, args.file2[i]))
+    logging.info('N=%d', args.N)
+    logging.info('image_names=%s' % args.image_names)
+    logging.info('outdir=%s' % args.outdir)
 
     # pickle either contains {layer : {img_idx : [(unit_idx, activation_val), ...]}}
     # or {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
@@ -644,20 +644,35 @@ def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
 
 def load_pickle(filename):
-    f = open(filename)
-    data = pickle.load(f)
-    f.close()
+    #{layer : {img_idx : [(unit_idx, activation_val), ...]}}
+    logging.info('reading %s' % filename)
+    try:
+        f = open(filename)
+        data = pickle.load(f)
+        f.close()
+    except IOError:
+        logging.critical('failed to open %s' % filename)
+        raise
+    except:
+        logging.critical('%s does not contain pickled data' % filename)    
+    
+    logging.info('layers: ' + repr([x for x in data.iterkeys()]))
     return data
 
 def save_pickle(data, filename):
+    logging.debug('save_pickle: start...')
+    logging.debug('save_pickle: saving extracted data to %s' % filename)
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
     with open(filename, 'wb') as ff:
         pickle.dump(data, ff, -1)
     #pickle_to_text(filename)
+    logging.debug('save_pickle: end.')
 
 def save_execution_data(args, top_n, current_time, filename):
+    logging.debug('save_execution_data: start...')
+    logging.debug('save_execution_data: saving execution data to %s' % filename)
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
 
@@ -667,6 +682,7 @@ def save_execution_data(args, top_n, current_time, filename):
             f.write( "%s: %s\n" % (k, args.__dict__[k]))
         f.write("used N: %d" % top_n)
         f.close()
+    logging.debug('save_execution_data: end.')
 
 if __name__ == '__main__':
     main()
