@@ -6,9 +6,6 @@ Created on Mon Jan 29 11:03:44 2018
 @author: martin
 """
 
-#! /usr/bin/env python2
-#! /usr/bin/env python2
-
 import matplotlib
 matplotlib.use('Agg')
 
