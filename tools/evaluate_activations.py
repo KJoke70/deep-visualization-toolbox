@@ -34,6 +34,8 @@ def main():
     parser.add_argument('--N', type = int, default = None, help = 'compare top N, if None all within file will be used')
     parser.add_argument('--image_names', type = str, default = None, help = 'a list with all image filenames in the order they were used' )
     parser.add_argument('--outdir', type = str, default = os.path.join(currentdir, 'results', 'comp-' + execution_time), help = 'First file with information to plot')
+    parser.add_argument('--iter_step', type = int, default = 300, help = 'iteration steps when multiple files2 are used')
+    parser.add_argument('--save_pickled', type = bool, default = False, help = 'Whether to save extracted data as *.pickled. No pickled is saved by default')
 
     args = parser.parse_args()
 
@@ -49,12 +51,16 @@ def main():
 
     mkdir_p(args.outdir)
     logging.basicConfig(filename=os.path.join(args.outdir, 'execution_log.log'), level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.info('START TIME: %s' % execution_time)
     logging.info('file1=%s' % args.file1)
+    if len(args.file2) > 1:
+        logging.info('number of files2: %d' % len(args.file2))
     for i in xrange(len(args.file2)):
         logging.info('files2[%i]=%s' % (i, args.file2[i]))
     logging.info('N=%d', args.N)
     logging.info('image_names=%s' % args.image_names)
     logging.info('outdir=%s' % args.outdir)
+    logging.info('iter_step=%d' % args.iter_step)
 
     # pickle either contains {layer : {img_idx : [(unit_idx, activation_val), ...]}}
     # or {img_idx : {img_idx : [(unit_idx, activation_val), ...]}
@@ -88,31 +94,91 @@ def main():
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
     if len(files2) > 1:#TODO
-        pass
+        extracted_data = []
+        for i in xrange(len(files2)):
+            logging.debug('extract_data: for iteration %d' % (i * args.iter_step))
+            extracted_data.append(extract_data(file1, files2[i], top_n))
     else:
         extracted_data = extract_data(file1, files2[0], top_n)
-        evaluate_data(extracted_data, top_n, args.outdir)
+    evaluate_data(extracted_data, top_n, args.outdir, args.iter_step)
 
     # save extracted_data as pickled-file
-    save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
-    # save command line parameters and execution-time in file
-    save_execution_data(args, top_n, execution_time, os.path.join(args.outdir, 'execution_data.txt'))
+    if args.save_pickled:
+        save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
 
-def evaluate_data(extracted_data, top_n, outdir):
+def evaluate_data(extracted_data, top_n, outdir, iter_step=None):
     logging.debug('evaluate_data: start...')
-    for l in extracted_data:
-        logging.debug('evaluate_data: for layer %s' % l)
-        plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_ordered.png'))
-        plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
-        plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
-        plot_activation_difference_curve(extracted_data[l]['equal_ind_o'], top_n, 'Activation-Difference For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_ordered.png'))
-        plot_activation_difference_curve(extracted_data[l]['equal_ind_u'], top_n, 'Activation-Difference For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_unordered.png'))
-        plot_activation_averages(extracted_data[l]['averages'], top_n, 'Activation Averages\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_averages.png'))
+    if type(extracted_data) == type(list()):
+        layers = []
+        for i in xrange(len(extracted_data)):
+            for l in extracted_data[i]:
+                layers.append(l)
+            break
 
-        for n in xrange(top_n):
-            plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
+        assert iter_step != None
+        logging.debug('evaluate_data: multiple-file-comparison')
+        for l in layers:
+            perc_data_o = retreive_key_data(extracted_data, l, 'percentages_o')
+            perc_data_u = retreive_key_data(extracted_data, l, 'percentages_u')
+            plot_index_data_per_iter(perc_data_o, top_n, 'Equal Units over time (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_per_iters_ordered.png'), iter_step)
+            plot_index_data_per_iter(perc_data_u, top_n, 'Equal Units over time\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_per_iters_ordered.png'), iter_step)
+    else:
+        logging.debug('evaluate_data: single-file-comparison')
+        for l in extracted_data:
+            logging.debug('evaluate_data: for layer %s' % l)
+            plot_index_data(extracted_data[l]['percentages_o'], top_n, 'Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_ordered.png'))
+            plot_index_data(extracted_data[l]['percentages_u'], top_n, 'Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_tops_unordered.png'))
+            plot_activation_difference(extracted_data[l]['equal_ind_o'], top_n, 'Activations For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_ordered.png'))
+            plot_activation_difference(extracted_data[l]['equal_ind_u'], top_n, 'Activations For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_values_unordered.png'))
+            plot_activation_difference_curve(extracted_data[l]['equal_ind_o'], top_n, 'Activation-Difference For Equal Units (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_ordered.png'))
+            plot_activation_difference_curve(extracted_data[l]['equal_ind_u'], top_n, 'Activation-Difference For Equal Units\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_diffs_unordered.png'))
+            plot_activation_averages(extracted_data[l]['averages'], top_n, 'Activation Averages\nLayer: ' + l, os.path.join(outdir, l, l + '_avg_activation_averages.png'))
+
+            for n in xrange(top_n):
+                plot_count_occurences(extracted_data[l]['combined_counts'][n], n + 1, 'Distribution Of Activations\nLayer: ' + l, os.path.join(outdir, l, l + '_count_hist_top_' + str(n + 1) + '.png'))
     logging.debug('evaluate_data: end.')
+
+def plot_index_data_per_iter(percentages, top_n, title, filename, iter_step, min_y=0.0, max_y=1.0):
+    """
+    plots a graph to show what portion of unit indices remain the same within the top-N activations of both networks
+    """
+    logging.debug('plot_index_data_per_iter: start...')
+    logging.debug('plot_index_data_per_iter: top-n=%d; title=%s; filename=%s; iter_step=%d min_y=%f; max_y=%f' % (top_n, title, filename, iter_step, min_y, max_y))
+
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+    
+    x_label = 'Top-N'
+    y_label = 'Portion Of Equal Indices In Top-N'
+    x_axis = np.arange(1, top_n + 1, 1)
+
+    abs_diff = abs(max_y - min_y)
+    if min_y > 0.0:
+        min_y -= abs_diff / float(top_n)
+    if max_y < 1.0:
+        max_y += abs_diff / float(top_n)
+
+    y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
+    
+    plt.clf()
+    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 10))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    plt.title(title)
+    plt.xticks(x_axis)
+    plt.yticks(y_axis)
+    plt.ylim(min_y, max_y)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.grid(True)
+
+    for i in xrange(len(percentages)):
+        plt.plot(x_axis, percentages[i], 'ro', label=str(i * iter_step))
+        for i, j in zip(x_axis, percentages[i]): #TODO source
+            ax.annotate("%.3f" % j, xy=(i, j))
+
+    plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
+    plt.close()
+    logging.debug('plot_index_data_per_iter: end')
 
 def plot_index_data(percentages, top_n, title, filename, min_y=0.0, max_y=1.0):
     """
@@ -456,6 +522,16 @@ def extract_data(data1, data2, top_n, image_names=None):
     logging.debug('extract_data: end.')
     return result
 
+def retreive_key_data(data, layer, key):
+    """
+    #TODO
+    """
+    result = []
+    for i in xrange(len(data)):
+        result.append(data[i][layer][key])
+    return result
+
+
 def compare_indices(data1, data2, order, top_n):
     """
     data1, data2: {img_idx : [(unit_idx, activation_value), ...],...}
@@ -669,20 +745,6 @@ def save_pickle(data, filename):
         pickle.dump(data, ff, -1)
     #pickle_to_text(filename)
     logging.debug('save_pickle: end.')
-
-def save_execution_data(args, top_n, current_time, filename):
-    logging.debug('save_execution_data: start...')
-    logging.debug('save_execution_data: saving execution data to %s' % filename)
-    dirname = os.path.dirname(filename)
-    mkdir_p(dirname)
-
-    with open(filename, 'wt') as f:
-        f.write("date: %s\n" % current_time)
-        for k in args.__dict__:
-            f.write( "%s: %s\n" % (k, args.__dict__[k]))
-        f.write("used N: %d" % top_n)
-        f.close()
-    logging.debug('save_execution_data: end.')
 
 if __name__ == '__main__':
     main()
