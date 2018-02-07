@@ -152,29 +152,31 @@ def plot_index_data_per_iter(percentages, top_n, title, filename, iter_step, min
     y_label = 'Portion Of Equal Indices In Top-N'
     x_axis = np.arange(1, top_n + 1, 1)
 
-    abs_diff = abs(max_y - min_y)
-    if min_y > 0.0:
-        min_y -= abs_diff / float(top_n)
-    if max_y < 1.0:
-        max_y += abs_diff / float(top_n)
+    #abs_diff = abs(max_y - min_y)
+    #if min_y > 0.0:
+    #    min_y -= abs_diff / float(top_n)
+    #if max_y < 1.0:
+    #    max_y += abs_diff / float(top_n)
 
-    y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
+    #y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
     
     plt.clf()
-    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 10))
+    fig, ax = plt.subplots(figsize=(8 * (top_n/10), 12))
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     plt.title(title)
     plt.xticks(x_axis)
-    plt.yticks(y_axis)
-    plt.ylim(min_y, max_y)
+    #plt.yticks(y_axis)
+    #plt.ylim(min_y, max_y)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.grid(True)
 
     for i in xrange(len(percentages)):
-        plt.plot(x_axis, percentages[i], 'ro', label=str(i * iter_step))
+        plt.plot(x_axis, percentages[i], 'o', label=str(i * iter_step))
         for i, j in zip(x_axis, percentages[i]): #TODO source
-            ax.annotate("%.3f" % j, xy=(i, j))
+            ax.annotate("%.3f" % j, xy=(i, j), fontsize=5)
+    ax.legend(loc='lower right', bbox_to_anchor=(0.5, 1.05),
+          ncol=1, fancybox=True, shadow=True)
 
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
