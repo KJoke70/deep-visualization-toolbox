@@ -118,10 +118,10 @@ def evaluate_data(extracted_data, top_n, outdir, iter_step=None):
         assert iter_step != None
         logging.debug('evaluate_data: multiple-file-comparison')
         for l in layers:
-            perc_data_o = retreive_key_data(extracted_data, l, 'percentages_o')
-            perc_data_u = retreive_key_data(extracted_data, l, 'percentages_u')
-            plot_index_data_per_iter(perc_data_o, top_n, 'Equal Units over time (Considering Order)\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_per_iters_ordered.png'), iter_step)
-            plot_index_data_per_iter(perc_data_u, top_n, 'Equal Units over time\nLayer: ' + l, os.path.join(outdir, l, l + '_perc_equal_per_iters_ordered.png'), iter_step)
+            perc_data_o = retreive_percentage_data(extracted_data, l, 'percentages_o', top_n)
+            perc_data_u = retreive_percentage_data(extracted_data, l, 'percentages_u', top_n)
+            plot_index_data_per_iter(perc_data_o, top_n, 'Equal Units over time (Considering Order)\nLayer: ' + l, os.path.join(outdir, l + '_top' + str(top_n) + 'perc_equal_per_iters_ordered.png'), iter_step)
+            plot_index_data_per_iter(perc_data_u, top_n, 'Equal Units over time\nLayer: ' + l, os.path.join(outdir, l + '_top' + str(top_n) + '_perc_equal_per_iters_unordered.png'), iter_step)
     else:
         logging.debug('evaluate_data: single-file-comparison')
         for l in extracted_data:
@@ -148,35 +148,27 @@ def plot_index_data_per_iter(percentages, top_n, title, filename, iter_step, min
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
     
-    x_label = 'Top-N'
-    y_label = 'Portion Of Equal Indices In Top-N'
-    x_axis = np.arange(1, top_n + 1, 1)
+    x_label = 'Iterations'
+    y_label = 'Portion Of Equal Indices In Top-' + str(top_n)
+    x_axis = np.arange(iter_step, iter_step * len(percentages) + 1, iter_step)
 
-    #abs_diff = abs(max_y - min_y)
-    #if min_y > 0.0:
-    #    min_y -= abs_diff / float(top_n)
-    #if max_y < 1.0:
-    #    max_y += abs_diff / float(top_n)
+    max_y = max(percentages) + 0.1
+    min_y = min(percentages) - 0.1
 
-    #y_axis = np.linspace(min_y, max_y, top_n + 1, endpoint=True)
     
     plt.clf()
     fig, ax = plt.subplots(figsize=(8 * (top_n/10), 12))
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
     plt.title(title)
     plt.xticks(x_axis)
-    #plt.yticks(y_axis)
-    #plt.ylim(min_y, max_y)
+    plt.ylim(min_y, max_y)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.grid(True)
 
-    for i in xrange(len(percentages)):
-        plt.plot(x_axis, percentages[i], 'o', label=str(i * iter_step))
-        for i, j in zip(x_axis, percentages[i]): #TODO source
-            ax.annotate("%.3f" % j, xy=(i, j), fontsize=5)
-    ax.legend(loc='lower right', bbox_to_anchor=(0.5, 1.05),
-          ncol=1, fancybox=True, shadow=True)
+    plt.plot(x_axis, percentages, 'o')
+    for i, j in zip(x_axis, percentages): #TODO source
+        ax.annotate("%.3f" % j, xy=(i, j))
 
     plt.savefig(filename, format='png', bbox_inches='tight', dpi=300)
     plt.close()
@@ -524,15 +516,16 @@ def extract_data(data1, data2, top_n, image_names=None):
     logging.debug('extract_data: end.')
     return result
 
-def retreive_key_data(data, layer, key):
+def retreive_percentage_data(data, layer, key, top_n):
     """
-    #TODO
+    data: [{layer : {key : [...]}}, ...]
+    key is either percentages_o or percentages_u
+    returns list of the percentage of equal indices for every entry in data
     """
     result = []
     for i in xrange(len(data)):
-        result.append(data[i][layer][key])
+        result.append(data[i][layer][key][top_n-1])
     return result
-
 
 def compare_indices(data1, data2, order, top_n):
     """
