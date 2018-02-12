@@ -91,11 +91,11 @@ def main():
     
 
     def process_image(img_path, all_images = False, img_idx = None):
-        image = caffe.io.load_image(image_path) #TODO
+        image = caffe.io.load_image(image_path)
         transformed_image = transformer.preprocess('data', image)
 
         net.blobs['data'].data[...] = transformed_image
-        output = net.forward()
+        net.forward()
 
         if unit_list != None:
             for l, units in unit_list.iteritems():
@@ -103,11 +103,11 @@ def main():
                 features = net.blobs[l].data.copy()
                 if all_images:
                     if img_idx == 0:
-                        save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
-                    save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l), set(units))
+                        save_vis_data(filters, os.path.join(args.outdir, l, 'filters'), set(units))
+                    save_vis_data(features, os.path.join(args.outdir, l, 'features', str(img_idx)), set(units))
                 else:
-                    save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
-                    save_vis_data(features, os.path.join(args.outdir, 'features', l), set(units))
+                    save_vis_data(filters, os.path.join(args.outdir, l, 'filters'), set(units))
+                    save_vis_data(features, os.path.join(args.outdir, l, 'features'), set(units))
         else:
             for l, _ in net.blobs.iteritems():
                 if 'conv' in l:
@@ -115,14 +115,15 @@ def main():
                     features = net.blobs[l].data.copy()
                     if all_images:
                         if img_idx == 0:
-                            save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
-                        save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l))
+                            save_vis_data(filters, os.path.join(args.outdir, l, 'filters'))
+                        save_vis_data(features, os.path.join(args.outdir, l, 'features', str(img_idx)))
                     else:
-                        save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
-                        save_vis_data(features, os.path.join(args.outdir, 'features', l))
+                        save_vis_data(filters, os.path.join(args.outdir, l, 'filters'))
+                        save_vis_data(features, os.path.join(args.outdir, l, 'features'))
     
     if args.all_images:
         for i, p in enumerate(image_list):
+            print 'processing image:', p
             process_image(p, True, i)
     else:
         process_image(image_path)
