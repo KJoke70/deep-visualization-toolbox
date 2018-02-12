@@ -25,6 +25,7 @@ from find_maxes.max_tracker import output_max_patches
 from find_maxes.find_max_acts import load_max_tracker_from_file
 from settings_misc import load_network
 
+from extend_max_tracker import output_max_patches_unit
 
 def main():
     parser = argparse.ArgumentParser(description='Loads a pickled NetMaxTracker and outputs one or more of {the patches of the image, a deconv patch, a backprop patch} associated with the maxes.')
@@ -92,7 +93,14 @@ def main():
 
                 with WithTimer('Saved %d images for unit %d in layer %s.' % (args.N, unit, normalized_layer_name)):
                     #TODO output_max_patches for unit
-                    pass
+                    output_max_patches_unit(settings, mt, net, normalized_layer_name, idx_begin, idx_end,
+                                        args.N, args.datadir, args.filelist, args.outdir, False,
+                                        (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
+
+                    if args.search_min:
+                        output_max_patches_unit(settings, mt, net, normalized_layer_name, idx_begin, idx_end,
+                                        args.N, args.datadir, args.filelist, args.outdir, True,
+                                        (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
 
 
     else:
