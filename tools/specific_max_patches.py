@@ -10,6 +10,7 @@ import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0,parentdir)
+sys.path.insert(0,parentdir + '/find_maxes')
 
 import argparse
 #import ipdb as pdb
@@ -20,9 +21,10 @@ import settings
 from caffevis.caffevis_helper import set_mean
 from siamese_helper import SiameseHelper
 
-from find_maxes.jby_misc import WithTimer
-from find_maxes.max_tracker import output_max_patches
-from find_maxes.find_max_acts import load_max_tracker_from_file
+import max_tracker
+from jby_misc import WithTimer
+from max_tracker import output_max_patches
+from find_max_acts import load_max_tracker_from_file
 from settings_misc import load_network
 
 from extend_max_tracker import output_max_patches_unit
@@ -80,8 +82,8 @@ def main():
 
     siamese_helper = SiameseHelper(settings.layers_list)
 
-    #nmt = load_max_tracker_from_file(args.nmt_pkl)
-
+    nmt = load_max_tracker_from_file(args.nmt_pkl)
+    
     if args.unit_list != None:
         for layer in unit_list:
             normalized_layer_name = siamese_helper.normalize_layer_name_for_max_tracker(layer)
@@ -89,7 +91,7 @@ def main():
             for unit in units:
                 print 'Started work on layer %s' % (layer)
 
-                #mt = nmt.max_trackers[normalized_layer_name]
+                mt = nmt.max_trackers[normalized_layer_name]
 
                 with WithTimer('Saved %d images for unit %d in layer %s.' % (args.N, unit, normalized_layer_name)):
                     #TODO output_max_patches for unit
