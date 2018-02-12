@@ -102,7 +102,8 @@ def main():
                 filters = net.params[l][0].data.copy()
                 features = net.blobs[l].data.copy()
                 if all_images:
-                    save_vis_data(filters, os.path.join(args.outdir, 'filters', str(img_idx), l), set(units))
+                    if img_idx == 0:
+                        save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
                     save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l), set(units))
                 else:
                     save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
@@ -113,7 +114,8 @@ def main():
                     filters = net.params[l][0].data.copy()
                     features = net.blobs[l].data.copy()
                     if all_images:
-                        save_vis_data(filters, os.path.join(args.outdir, 'filters', str(img_idx), l))
+                        if img_idx == 0:
+                            save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
                         save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l))
                     else:
                         save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
