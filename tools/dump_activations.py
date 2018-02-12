@@ -41,7 +41,8 @@ def main():
     parser.add_argument('weights', type = str, help = 'path to .caffemodel weights')
     parser.add_argument('--outdir', type = str, default = os.path.join(currentdir, 'result'), help = 'output directory')
     parser.add_argument('--image_path', type = str, default = None, help = 'path to image. Will be used instead if image_list')
-    parser.add_argument('--image_list', type = str, default = os.path.join(parentdir, 'INPUT', 'image_list.txt'), help = 'path to image list')#TODO dirname
+    parser.add_argument('--image_list', type = str, default = os.path.join(parentdir, 'INPUT', 'image_list.txt'), help = 'path to image list')
+    parser.add_argument('--all_images', type = bool, default = False, help = 'should all images be used?')
     parser.add_argument('--unit_list',    type = str, default = None, help = 'path to list of units to consider')
     parser.add_argument('--gpu', type = bool, default = False, help = 'use gpu or not')
 
@@ -71,10 +72,11 @@ def main():
     else:
         assert os.path.exists(args.image_list), args.image_list + ' doesn\'t exist'
         with open(args.image_list) as f:
-            content = f.read().split()
+            image_list = f.read().split()
             image_dir = os.path.dirname(args.image_list)
-            image_path = os.path.join(image_dir, content[100])
+            image_path = os.path.join(image_dir, image_list[0])
             assert os.path.exists(image_path), image_path + ' doesnt\'t exist'
+
 
     mean_value = np.array([103.939, 116.779, 123.68]) #BGR!
     transformer = caffe.io.Transformer({'data':net.blobs['data'].data.shape})
@@ -86,25 +88,43 @@ def main():
     net.blobs['data'].reshape(50,        # batch size
                             3,         # 3-channel (BGR) images
                             224, 224)  # image size is 227x227
-    image = caffe.io.load_image(image_path) #TODO
-    transformed_image = transformer.preprocess('data', image)
+    
 
-    net.blobs['data'].data[...] = transformed_image
-    output = net.forward()
+    def process_image(img_path, all_images = False, img_idx = None):
+        image = caffe.io.load_image(image_path) #TODO
+        transformed_image = transformer.preprocess('data', image)
 
-    if unit_list != None:
-        for l, units in unit_list.iteritems():
-            filters = net.params[l][0].data.copy()
-            features = net.blobs[l].data.copy()
-            save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
-            save_vis_data(features, os.path.join(args.outdir, 'features', l), set(units))
-    else:
-        for l, _ in net.blobs.iteritems():
-            if 'conv' in l:
+        net.blobs['data'].data[...] = transformed_image
+        output = net.forward()
+
+        if unit_list != None:
+            for l, units in unit_list.iteritems():
                 filters = net.params[l][0].data.copy()
                 features = net.blobs[l].data.copy()
-                save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
-                save_vis_data(features, os.path.join(args.outdir, 'features', l))
+                if all_images:
+                    save_vis_data(filters, os.path.join(args.outdir, 'filters', str(img_idx), l), set(units))
+                    save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l), set(units))
+                else:
+                    save_vis_data(filters, os.path.join(args.outdir, 'filters', l), set(units))
+                    save_vis_data(features, os.path.join(args.outdir, 'features', l), set(units))
+        else:
+            for l, _ in net.blobs.iteritems():
+                if 'conv' in l:
+                    filters = net.params[l][0].data.copy()
+                    features = net.blobs[l].data.copy()
+                    if all_images:
+                        save_vis_data(filters, os.path.join(args.outdir, 'filters', str(img_idx), l))
+                        save_vis_data(features, os.path.join(args.outdir, 'features', str(img_idx), l))
+                    else:
+                        save_vis_data(filters, os.path.join(args.outdir, 'filters', l))
+                        save_vis_data(features, os.path.join(args.outdir, 'features', l))
+    
+    if args.all_images:
+        for i, p in enumerate(image_list):
+            process_image(p, True, i)
+    else:
+        process_image(image_path)
+
 
 def save_vis_data(data, folder, unit_list = None):
     #normalize
