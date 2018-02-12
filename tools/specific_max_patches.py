@@ -58,9 +58,6 @@ def main():
         assert os.path.exists(args.unit_list)
         with open(args.unit_list, 'rt') as f:
             unit_list = json.load(f)
-        print unit_list
-
-
 
     net, data_mean = load_network(settings)
 
