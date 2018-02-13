@@ -20,6 +20,9 @@ import argparse
 import cPickle as pickle
 import datetime
 import logging
+import json
+
+#import copy
 
 import numpy as np
 from misc import mkdir_p
@@ -93,18 +96,26 @@ def main():
         logging.warning('N==%d not possible, using N==%d' % (args.N, top_n))
     top_n = args.N if (args.N <= top_n and args.N > 0) else top_n
 
-    if len(files2) > 1:#TODO
+    if len(files2) > 1:
         extracted_data = []
+        interesting_units = []
         for i in xrange(len(files2)):
             logging.debug('extract_data: for iteration %d' % (i * args.iter_step))
-            extracted_data.append(extract_data(file1, files2[i], top_n))
+            e_data, int_u = extract_data(file1, files2[i], top_n)
+            extracted_data.append(e_data)
+            interesting_units.append(int_u) #deepcopy?
     else:
-        extracted_data = extract_data(file1, files2[0], top_n)
+        extracted_data, interesting_units = extract_data(file1, files2[0], top_n)
     evaluate_data(extracted_data, top_n, args.outdir, args.iter_step)
 
     # save extracted_data as pickled-file
     if args.save_pickled:
         save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
+    if type(interesting_units) is list:
+        for i in xrange(len(interesting_units)):
+            save_json(interesting_units, os.path.join(args.outdir, str(i) + '_interesting_units.json'))
+    else:
+        save_json(interesting_units, os.path.join(args.outdir, 'interesting_units.json'))
 
 def evaluate_data(extracted_data, top_n, outdir, iter_step=None):
     logging.debug('evaluate_data: start...')
@@ -479,7 +490,7 @@ def extract_data(data1, data2, top_n, image_names=None):
     """
     logging.debug('extract_data: starting...')
     result = dict()
-
+    interesting_units = dict()
 
     for l in data1:
         logging.debug('extract_data: for layer %s' % l)
@@ -488,6 +499,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         equal_data_ordered = []
         equal_data_unordered = []
         result[l] = dict()
+        interesting_units[l] = []
 
         for n in xrange(1, top_n + 1):
             logging.debug('extract_data: percentages and equal indices for top-%d for layer %s' % (n, l))
@@ -506,6 +518,12 @@ def extract_data(data1, data2, top_n, image_names=None):
         logging.debug('extract_data: average activations for layer %s' % l)
         avgs1, avgs2 = top_n_average(data1[l], data2[l], top_n)
 
+        combined_counts = combine_counts(count1, count2)
+        _, y_data1, y_data2 = combined_counts[top_n - 1]
+        best_n_indices = sorted(range(len(y_data1)), key=lambda i: y_data1[i], reverse=True)[:20] + sorted(range(len(y_data2)), key=lambda i: y_data2[i], reverse=True)[:20]
+        best_n_indices = sorted(list(set(best_n_indices)))
+        interesting_units[l].append(best_n_indices)
+
         result[l]['percentages_o'] = percentages_ordered
         result[l]['percentages_u'] = percentages_unordered
         result[l]['equal_ind_o'] = equal_data_ordered
@@ -514,7 +532,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         result[l]['averages'] = (avgs1, avgs2)
 
     logging.debug('extract_data: end.')
-    return result
+    return result, interesting_units
 
 def retreive_percentage_data(data, layer, key, top_n):
     """
@@ -740,6 +758,12 @@ def save_pickle(data, filename):
         pickle.dump(data, ff, -1)
     #pickle_to_text(filename)
     logging.debug('save_pickle: end.')
+
+def save_json(data, filename):
+    dirname = os.path.dirname(filename)
+    mkdir_p(dirname)
+    with open(filename, 'wt') as f:
+        json.dump(data, f)
 
 if __name__ == '__main__':
     main()

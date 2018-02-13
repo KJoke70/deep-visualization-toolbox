@@ -89,7 +89,6 @@ def main():
                 mt = nmt.max_trackers[normalized_layer_name]
 
                 with WithTimer('Saved %d images for unit %d in layer %s.' % (args.N, unit, normalized_layer_name)):
-                    #TODO output_max_patches for unit
                     output_max_patches_unit(settings, mt, net, normalized_layer_name, unit,
                                         args.N, args.datadir, args.filelist, args.outdir, False,
                                         (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
