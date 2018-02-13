@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Script to dump filter and feature data from a trained net as images (modified version of script in private repository)
+Reference: https://github.com/BVLC/caffe/blob/master/examples/00-classification.ipynb
 
 __author__ = "Martin Lautenbacher"
 __version__ = "0.5"
@@ -92,17 +93,15 @@ def main():
 
     def process_image(img_path, all_images = False, img_idx = None):
         image = caffe.io.load_image(image_path)
-        transformed_image = transformer.preprocess('data', image)
-
-        net.blobs['data'].data[...] = transformed_image
+        net.blobs['data'].data[...] = transformer.preprocess('data', image)
         net.forward()
 
         if unit_list != None:
             for l, units in unit_list.iteritems():
-                filters = net.params[l][0].data.copy()
                 features = net.blobs[l].data.copy()
                 if all_images:
                     if img_idx == 0:
+                        filters = net.params[l][0].data.copy()
                         save_vis_data(filters, os.path.join(args.outdir, l, 'filters'), set(units))
                     save_vis_data(features, os.path.join(args.outdir, l, 'features', str(img_idx)), set(units))
                 else:
@@ -111,10 +110,10 @@ def main():
         else:
             for l, _ in net.blobs.iteritems():
                 if 'conv' in l:
-                    filters = net.params[l][0].data.copy()
                     features = net.blobs[l].data.copy()
                     if all_images:
                         if img_idx == 0:
+                            filters = net.params[l][0].data.copy()
                             save_vis_data(filters, os.path.join(args.outdir, l, 'filters'))
                         save_vis_data(features, os.path.join(args.outdir, l, 'features', str(img_idx)))
                     else:
