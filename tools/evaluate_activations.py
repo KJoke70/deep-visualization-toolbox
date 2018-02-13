@@ -111,6 +111,7 @@ def main():
     # save extracted_data as pickled-file
     if args.save_pickled:
         save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
+
     if type(interesting_units) is list:
         for i in xrange(len(interesting_units)):
             save_json(interesting_units, os.path.join(args.outdir, str(i) + '_interesting_units.json'))
@@ -522,7 +523,7 @@ def extract_data(data1, data2, top_n, image_names=None):
         _, y_data1, y_data2 = combined_counts[top_n - 1]
         best_n_indices = sorted(range(len(y_data1)), key=lambda i: y_data1[i], reverse=True)[:20] + sorted(range(len(y_data2)), key=lambda i: y_data2[i], reverse=True)[:20]
         best_n_indices = sorted(list(set(best_n_indices)))
-        interesting_units[l].append(best_n_indices)
+        interesting_units[l][:] = best_n_indices
 
         result[l]['percentages_o'] = percentages_ordered
         result[l]['percentages_u'] = percentages_unordered
@@ -760,10 +761,13 @@ def save_pickle(data, filename):
     logging.debug('save_pickle: end.')
 
 def save_json(data, filename):
+    logging.debug('save_json: start...')
+    logging.debug('save_json: saving json data to %s' % filename)
     dirname = os.path.dirname(filename)
     mkdir_p(dirname)
     with open(filename, 'wt') as f:
         json.dump(data, f)
+    logging.debug('save_json: end.')
 
 if __name__ == '__main__':
     main()
