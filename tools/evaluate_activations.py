@@ -39,6 +39,8 @@ def main():
     parser.add_argument('--outdir', type = str, default = os.path.join(currentdir, 'results', 'comp-' + execution_time), help = 'First file with information to plot')
     parser.add_argument('--iter_step', type = int, default = 300, help = 'iteration steps when multiple files2 are used')
     parser.add_argument('--save_pickled', type = bool, default = False, help = 'Whether to save extracted data as *.pickled. No pickled is saved by default')
+    parser.add_argument('--save_json', type = bool, default = True, help = 'Whether to save Interesting units as json. Default is True')
+    parser.add_argument('--no_eval', type = bool, default = False, help = 'Don\'t create plots if True')
 
     args = parser.parse_args()
 
@@ -106,17 +108,20 @@ def main():
             interesting_units.append(int_u) #deepcopy?
     else:
         extracted_data, interesting_units = extract_data(file1, files2[0], top_n)
-    evaluate_data(extracted_data, top_n, args.outdir, args.iter_step)
+    if not args.no_eval:
+        evaluate_data(extracted_data, top_n, args.outdir, args.iter_step)
 
     # save extracted_data as pickled-file
     if args.save_pickled:
         save_pickle(extracted_data, os.path.join(args.outdir, 'extracted_data.pickled'))
 
-    if type(interesting_units) is list:
-        for i in xrange(len(interesting_units)):
-            save_json(interesting_units, os.path.join(args.outdir, str(i) + '_interesting_units.json'))
-    else:
-        save_json(interesting_units, os.path.join(args.outdir, 'interesting_units.json'))
+    # save interesting units in json
+    if args.save_json:
+        if type(interesting_units) is list:
+            for i in xrange(len(interesting_units)):
+                save_json(interesting_units, os.path.join(args.outdir, str(i) + '_interesting_units.json'))
+        else:
+            save_json(interesting_units, os.path.join(args.outdir, 'interesting_units.json'))
 
 def evaluate_data(extracted_data, top_n, outdir, iter_step=None):
     logging.debug('evaluate_data: start...')
