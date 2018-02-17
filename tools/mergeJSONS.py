@@ -48,10 +48,10 @@ def mergeDicts(*arg):
     function to merge dicts in  the format {k1 : [...], k2 : [...], ...}
     returns merged dict of key:list pairs with no duplicates
     """
-    assert len(arg) > 0, "can't merge without dicts."
-    if len(arg) > 1:
+    assert len(*arg) > 0, "can't merge without dicts."
+    if len(*arg) > 1:
         result = dict()
-        for j in arg:
+        for j in tuple(*arg):
             for k in j.iterkeys():
                 if k in result:
                     result[k] = list(set(result[k] + j[k]))
