@@ -49,7 +49,7 @@ def main():
     parser.add_argument('--search-min',    action='store_true', default=False, help='Should we also search for minimal activations?')
 
     parser.add_argument('--unit_list',    type = str, default = None, help = 'path to list of units to consider')
-    parser.add_argument('-il', '--ignore_layers', nargs='*', help = 'ignore these layers')
+    parser.add_argument('-il', '--ignore_layers', nargs='*', default = [], help = 'ignore these layers')
 
     args = parser.parse_args()
 
