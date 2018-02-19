@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Mon Feb 15 16:30:44 2018
+Created on Thu Feb 15 16:30:44 2018
 
 @author: martin
 
