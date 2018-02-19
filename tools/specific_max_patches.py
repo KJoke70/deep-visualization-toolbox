@@ -49,6 +49,8 @@ def main():
     parser.add_argument('--search-min',    action='store_true', default=False, help='Should we also search for minimal activations?')
 
     parser.add_argument('--unit_list',    type = str, default = None, help = 'path to list of units to consider')
+    parser.add_argument('-il', '--ignore_layers', nargs='*', help = 'ignore these layers')
+
     args = parser.parse_args()
 
     settings.caffevis_deploy_prototxt = args.net_prototxt
@@ -78,10 +80,9 @@ def main():
     siamese_helper = SiameseHelper(settings.layers_list)
 
     nmt = load_max_tracker_from_file(args.nmt_pkl)
-    
     if args.unit_list != None:
         for layer in unit_list:
-            if layer in net.blobs.iterkeys() and not os.path.exists(os.path.join(args.outdir, layer)):
+            if layer in net.blobs.iterkeys() and not os.path.exists(os.path.join(args.outdir, layer)) and not layer in args.ignore_layers:
                 normalized_layer_name = siamese_helper.normalize_layer_name_for_max_tracker(layer)
                 units = set(unit_list[layer])
                 for unit in units:
