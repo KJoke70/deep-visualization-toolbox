@@ -81,22 +81,23 @@ def main():
     
     if args.unit_list != None:
         for layer in unit_list:
-            normalized_layer_name = siamese_helper.normalize_layer_name_for_max_tracker(layer)
-            units = set(unit_list[layer])
-            for unit in units:
-                print 'Started work on layer %s' % (layer)
+            if layer in net.blobs.iterkeys():
+                normalized_layer_name = siamese_helper.normalize_layer_name_for_max_tracker(layer)
+                units = set(unit_list[layer])
+                for unit in units:
+                    print 'Started work on layer %s' % (layer)
 
-                mt = nmt.max_trackers[normalized_layer_name]
+                    mt = nmt.max_trackers[normalized_layer_name]
 
-                with WithTimer('Saved %d images for unit %d in layer %s.' % (args.N, unit, normalized_layer_name)):
-                    output_max_patches_unit(settings, mt, net, normalized_layer_name, unit,
-                                        args.N, args.datadir, args.filelist, args.outdir, False,
-                                        (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
-
-                    if args.search_min:
+                    with WithTimer('Saved %d images for unit %d in layer %s.' % (args.N, unit, normalized_layer_name)):
                         output_max_patches_unit(settings, mt, net, normalized_layer_name, unit,
-                                        args.N, args.datadir, args.filelist, args.outdir, True,
-                                        (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
+                                            args.N, args.datadir, args.filelist, args.outdir, False,
+                                            (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
+
+                        if args.search_min:
+                            output_max_patches_unit(settings, mt, net, normalized_layer_name, unit,
+                                            args.N, args.datadir, args.filelist, args.outdir, True,
+                                            (args.do_maxes, args.do_deconv, args.do_deconv_norm, args.do_backprop, args.do_backprop_norm, args.do_info))
 
 
     else:
