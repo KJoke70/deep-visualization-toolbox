@@ -81,7 +81,7 @@ def main():
     
     if args.unit_list != None:
         for layer in unit_list:
-            if layer in net.blobs.iterkeys():
+            if layer in net.blobs.iterkeys() and not os.path.exists(os.path.join(args.outdir, layer)):
                 normalized_layer_name = siamese_helper.normalize_layer_name_for_max_tracker(layer)
                 units = set(unit_list[layer])
                 for unit in units:
