@@ -48,7 +48,7 @@ def get_parser():
                         help = 'Batch size used for generating several images, each index will be used as random seed')
 
     # What to optimize
-    parser.add_argument('--push-layers', type = list, default = settings.layers_to_output_in_offline_scripts,
+    parser.add_argument('--push-layers', nargs='*', default = settings.layers_to_output_in_offline_scripts, 
                         help = 'Name of layers that contains the desired neuron whose value is optimized.')
     parser.add_argument('--push-channel', type = int, default = '130',
                         help = 'Channel number for desired neuron whose value is optimized (channel for conv, neuron index for FC).')
