@@ -86,9 +86,9 @@ def main():
     transformer.set_raw_scale('data', 255)
     transformer.set_channel_swap('data', (2,1,0))
 
-    net.blobs['data'].reshape(50,        # batch size
+    net.blobs['data'].reshape(1,        # batch size
                             3,         # 3-channel (BGR) images
-                            224, 224)  # image size is 227x227
+                            224, 224)  # image size is 224x224
     
 
     def process_image(img_path, all_images = False, img_idx = None):
@@ -136,9 +136,12 @@ def save_vis_data(data, folder, unit_list = None):
         x1 = data.shape[0]
         x2 = data.shape[1]
         for unit in unit_list:
-            idx_x1 = unit / x1
-            idx_x2 = unit % x1
-            img = data[idx_x1, idx_x2] #TODO correct?
+            if x1 == 1:
+                img = data[0][unit]
+            else:
+                idx_x1 = unit / x1
+                idx_x2 = unit % x1
+                img = data[idx_x1, idx_x2] #TODO correct?
             if img.shape[0] <= 40 or img.shape[1] <= 40:
                     img = cv2.resize(img, (50, 50),
                             interpolation=cv2.INTER_NEAREST)
