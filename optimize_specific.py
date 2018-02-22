@@ -34,7 +34,7 @@ def main():
             if not os.path.exists(os.path.join(args.outdir, layer)) and not layer in args.ignore_layers:
                 units = set(unit_list[layer])
                 for unit in units:
-                    os.system("%s --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (os.path.join(currentdir, 'optimize_image.py'), args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_' + str(unit))))
+                    os.system("%s --decay 0.0001 --blur-radius 1.0 --blur-every 4 --lr-policy constant --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (os.path.join(currentdir, 'optimize_image.py'), args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_' + str(unit))))
 
 
 if __name__ == '__main__':

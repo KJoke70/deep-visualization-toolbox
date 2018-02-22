@@ -50,7 +50,7 @@ def get_parser():
     # What to optimize
     parser.add_argument('--push-layers', nargs='*', default = settings.layers_to_output_in_offline_scripts, 
                         help = 'Name of layers that contains the desired neuron whose value is optimized.')
-    parser.add_argument('--push-channel', type = int, default = '130',
+    parser.add_argument('--push-channel', type = int, default = None,
                         help = 'Channel number for desired neuron whose value is optimized (channel for conv, neuron index for FC).')
     parser.add_argument('--push-spatial', type = str, default = 'None',
                         help = 'Which spatial location to push for conv layers. For FC layers, set this to None. For conv layers, set it to a tuple, e.g. when using `--push-layer conv5` on AlexNet, --push-spatial (6,6) will maximize the center unit of the 13x13 spatial grid.')
@@ -137,7 +137,7 @@ def parse_and_validate_push_spatial(parser, push_spatial):
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    
+
     # Finish parsing args
 
     lr_params = parse_and_validate_lr_params(parser, args.lr_policy, args.lr_params)
@@ -196,7 +196,9 @@ def main():
             push_spatial = (0, 0)
 
         # if channels defined in settings file, use them
-        if settings.optimize_image_channels:
+        if args.push_channel != None:
+            channels_list = [args.push_channel]
+        elif settings.optimize_image_channels:
             channels_list = settings.optimize_image_channels
         else:
             channels_list = range(channels)
