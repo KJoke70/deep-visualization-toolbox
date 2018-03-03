@@ -92,7 +92,7 @@ def main():
     
 
     def process_image(img_path, all_images = False, img_idx = None):
-        image = caffe.io.load_image(image_path)
+        image = caffe.io.load_image(img_path)
         net.blobs['data'].data[...] = transformer.preprocess('data', image)
         net.forward()
 
@@ -123,7 +123,7 @@ def main():
     if args.all_images:
         for i, p in enumerate(image_list):
             print 'processing image:', p
-            process_image(p, True, i)
+            process_image(os.path.join(image_dir, p), True, i)
     else:
         process_image(image_path)
 
