@@ -101,10 +101,8 @@ def main():
 
     predictions_file.close()
 
-    top_1_avg = top_1_correct / float(len(img_data))
-    top_5_avg = top_5_correct / float(len(img_data))
-    print "top-1:", top_1_avg
-    print "top-5:", top_5_avg
+    top_1_avg = top_1_correct / float(len(image_list))
+    top_5_avg = top_5_correct / float(len(image_list))
 
     with open(os.path.join(args.outdir, 'avg_correct.txt'), 'wt') as f:
         f.write("Top-1:\t%f\n" % top_1_avg)
