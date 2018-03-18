@@ -781,12 +781,12 @@ def compile_csv(data, top_n, outdir, iter_step):
     avgs_u = dict()
     avgs_o = dict()
     for l in layers:
+        percs_o[l] = []
+        percs_u[l] = []
+        avgs[l] = []
+        avgs_u[l] = []
+        avgs_o[l] = []
         for i in xrange(len(data)): #i is iteration 
-            percs_o[l] = []
-            percs_u[l] = []
-            avgs[l] = []
-            avgs_u[l] = []
-            avgs_o[l] = []
             percs_o[l].append(data[i][l]['percentages_o'][:top_n]) # [t1, t2, t3][t1_2, t2_2, t3_3], ...
             percs_u[l].append(data[i][l]['percentages_u'][:top_n])
             avgs[l].append([x[1] for x in data[i][l]['averages'][:top_n]])          
@@ -806,7 +806,7 @@ def save_csv(data, iter_step, filename):
     with open(filename, 'wb') as csvf:
         writer=csv.writer(csvf, delimiter=',', quoting=csv.QUOTE_MINIMAL)
         for i in xrange(len(data)):
-            writer.writerow([i*iter_step] + list(data[i]))
+            writer.writerow([(i+1)*iter_step] + list(data[i]))
     
     
 #-----------------------------------------------------------------------------------------------------------------
