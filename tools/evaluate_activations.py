@@ -797,7 +797,7 @@ def compile_csv(data, top_n, outdir, iter_step):
         save_csv(percs_u[l], iter_step, os.path.join(path, l + '_equals_unordered_top' + str(top_n) + '.csv'))
         save_csv(avgs[l], iter_step, os.path.join(path, l + '_avgs_top' + str(top_n) + '.csv'))
         save_csv(avgs_o[l], iter_step, os.path.join(path, l + '_avgs_ordered_top' + str(top_n) + '.csv'))
-        save_csv(avgs_o[l], iter_step, os.path.join(path, l + '_avgs_ordered_top' + str(top_n) + '.csv'))
+        save_csv(avgs_u[l], iter_step, os.path.join(path, l + '_avgs_unordered_top' + str(top_n) + '.csv'))
     
 
 
