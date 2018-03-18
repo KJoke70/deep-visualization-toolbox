@@ -789,7 +789,7 @@ def compile_csv(data, top_n, outdir, iter_step):
         for i in xrange(len(data)): #i is iteration 
             percs_o[l].append(data[i][l]['percentages_o'][:top_n]) # [t1, t2, t3][t1_2, t2_2, t3_3], ...
             percs_u[l].append(data[i][l]['percentages_u'][:top_n])
-            avgs[l].append([x[1] for x in data[i][l]['averages'][:top_n]])          
+            avgs[l].append(data[i][l]['averages'][1][:top_n])          
             avgs_o[l].append(sorted_avgs(data[i][l]['equal_ind_o'], top_n))
             avgs_u[l].append(sorted_avgs(data[i][l]['equal_ind_u'], top_n))
         
