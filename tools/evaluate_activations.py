@@ -757,6 +757,35 @@ def sorted_avgs(data, top_n):
     
     return y2_vals
 
+def compile_counts(data, iter_step, best=20):
+    
+    rows = []
+    rows.append([' '] + [(i+1)*iter_step for i in range(len(data))]) #row one
+    keys = []
+    for i in xrange(len(data)):
+        x_data, y_data1, y_data2 = data[i]
+        # https://stackoverflow.com/questions/13070461/get-index-of-the-top-n-values-of-a-list-in-python
+        best_n_indices = sorted(range(len(y_data1)), key=lambda i: y_data1[i], reverse=True)[:best] + sorted(range(len(y_data2)), key=lambda i: y_data2[i], reverse=True)[:best]
+        best_n_indices = sorted(list(set(best_n_indices)))
+        
+        for ind in best_n_indices:
+            keys.append(x_data[ind])
+    
+    keys = sorted(list(set(keys)))
+
+    for k in keys:
+        row = [k]
+        for i in xrange(len(data)):
+            x_data, y_data1, y_data2 = data[i]
+            if k in x_data:
+                ind = x_data.index(k)
+                row = row + [y_data2[ind]]
+            else:
+                row = row + [0]
+        rows.append(row)
+
+    return rows
+
 def compile_csv(data, top_n, outdir, iter_step):
     assert type(data) == type(list()), "Extracted data is not a list"
     path = os.path.join(outdir, 'csv' + str(top_n))
@@ -776,22 +805,29 @@ def compile_csv(data, top_n, outdir, iter_step):
 
     percs_u = dict()
     percs_o = dict()
-    #count = dict()
+    count = dict()
     avgs = dict()
     avgs_u = dict()
     avgs_o = dict()
     for l in layers:
         percs_o[l] = []
         percs_u[l] = []
+        count[l] = []
         avgs[l] = []
         avgs_u[l] = []
         avgs_o[l] = []
         for i in xrange(len(data)): #i is iteration 
             percs_o[l].append(data[i][l]['percentages_o'][:top_n]) # [t1, t2, t3][t1_2, t2_2, t3_3], ...
             percs_u[l].append(data[i][l]['percentages_u'][:top_n])
+            if top_n >= 10:
+                count[l].append(data[i][l]['combined_counts'][10])
             avgs[l].append(data[i][l]['averages'][1][:top_n])          
             avgs_o[l].append(sorted_avgs(data[i][l]['equal_ind_o'], top_n))
             avgs_u[l].append(sorted_avgs(data[i][l]['equal_ind_u'], top_n))
+        
+        if top_n >= 10:
+            compiled_count = compile_counts(count[l], iter_step)
+            save_count_csv(compiled_count, os.path.join(path, l + '_counts_top10.csv'))
         
         save_csv(percs_o[l], iter_step, os.path.join(path, l + '_equals_ordered_top' + str(top_n) + '.csv'))
         save_csv(percs_u[l], iter_step, os.path.join(path, l + '_equals_unordered_top' + str(top_n) + '.csv'))
@@ -800,7 +836,11 @@ def compile_csv(data, top_n, outdir, iter_step):
         save_csv(avgs_u[l], iter_step, os.path.join(path, l + '_avgs_unordered_top' + str(top_n) + '.csv'))
     
 
-
+def save_count_csv(data, filename):
+    with open(filename, 'wb') as csvf:
+        writer=csv.writer(csvf, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+        for i in xrange(len(data)):
+            writer.writerow(data[i])
 
 def save_csv(data, iter_step, filename):
     with open(filename, 'wb') as csvf:
