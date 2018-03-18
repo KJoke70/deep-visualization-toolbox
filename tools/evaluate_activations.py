@@ -21,6 +21,7 @@ import cPickle as pickle
 import datetime
 import logging
 import json
+import csv
 
 #import copy
 
@@ -41,6 +42,7 @@ def main():
     parser.add_argument('--save_pickled', type = bool, default = False, help = 'Whether to save extracted data as *.pickled. No pickled is saved by default')
     parser.add_argument('--save_json', type = bool, default = True, help = 'Whether to save Interesting units as json. Default is True')
     parser.add_argument('--no_eval', type = bool, default = False, help = 'Don\'t create plots if True')
+    parser.add_argument('--compile_csv', type = bool, default = True, help = 'Save progress over iterations as csv table. Does nothing if len(file2) == 1')
 
     args = parser.parse_args()
 
@@ -110,6 +112,9 @@ def main():
         extracted_data, interesting_units = extract_data(file1, files2[0], top_n)
     if not args.no_eval:
         evaluate_data(extracted_data, top_n, args.outdir, args.iter_step)
+    
+    if len(files2) > 1 and bool(args.compile_csv):
+        compile_csv(extracted_data, top_n, args.outdir, args.iter_step)
 
     # save extracted_data as pickled-file
     if args.save_pickled:
@@ -735,6 +740,77 @@ def top_n_activations(data1, data2, top_n):
             pass #TODO
 
 #------------------------------------------------------------------------------------------------------------------------------------
+def sorted_avgs(data, top_n):
+    x_axis = np.arange(1, top_n + 1, 1)
+    for i in x_axis:
+        count = 0
+        sum1 = 0
+        sum2 = 0
+        total_diff = 0
+        for img_idx in data[i - 1]:
+            for info in data[i - 1][img_idx]['equals'][:i]:
+                sum2 += info[2]
+                count += 1
+        if count > 0:
+            y2_vals.append(sum2 / float(count))
+        else:
+            y2_vals.append(0)
+    
+    return y2_vals
+
+def compile_csv(data, top_n, outdir, iter_step):
+    assert type(data) == type(list()), "Extracted data is not a list"
+    path = os.path.join(outdir, 'csv' + str(top_n))
+    mkdir_p(path)
+    # keys:
+    #   percentages_o. percentages_u
+    #   equal_ind_o, equal_ind_u
+    #   combined_counts
+    #   averages
+    
+
+    layers = []
+    for i in xrange(len(data)):
+        for l in data[i]:
+            layers.append(l)
+        break
+
+    percs_u = dict()
+    percs_o = dict()
+    #count = dict()
+    avgs = dict()
+    avgs_u = dict()
+    avgs_o = dict()
+    for l in layers:
+        for i in xrange(len(data)): #i is iteration 
+            percs_o[l] = []
+            percs_u[l] = []
+            avgs[l] = []
+            avgs_u[l] = []
+            avgs_o[l] = []
+            percs_o[l].append(data[i][l]['percentages_o'][:top_n]) # [t1, t2, t3][t1_2, t2_2, t3_3], ...
+            percs_u[l].append(data[i][l]['percentages_u'][:top_n])
+            avgs[l].append([x[1] for x in data[i][l]['averages'][:top_n]])          
+            avgs_o[l].append(sorted_avgs(data[i][l]['equal_ind_o'], top_n))
+            avgs_u[l].append(sorted_avgs(data[i][l]['equal_ind_u'], top_n))
+        
+        save_csv(percs_o[l], iter_step, os.path.join(path, l + '_equals_ordered_top' + str(top_n) + '.csv'))
+        save_csv(percs_u[l], iter_step, os.path.join(path, l + '_equals_unordered_top' + str(top_n) + '.csv'))
+        save_csv(avgs[l], iter_step, os.path.join(path, l + '_avgs_top' + str(top_n) + '.csv'))
+        save_csv(avgs_o[l], iter_step, os.path.join(path, l + '_avgs_ordered_top' + str(top_n) + '.csv'))
+        save_csv(avgs_o[l], iter_step, os.path.join(path, l + '_avgs_ordered_top' + str(top_n) + '.csv'))
+    
+
+
+
+def save_csv(data, iter_step, filename):
+    with open(filename, 'wb') as csvf:
+        writer=csv.writer(csvf, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+        for i in xrange(len(data)):
+            writer.writerow([i*iter_step] + list(data[i]))
+    
+    
+#-----------------------------------------------------------------------------------------------------------------
 def check_if_contains_duplicates(arr):
     return len(arr) != len(set(arr))
 
