@@ -742,11 +742,10 @@ def top_n_activations(data1, data2, top_n):
 #------------------------------------------------------------------------------------------------------------------------------------
 def sorted_avgs(data, top_n):
     x_axis = np.arange(1, top_n + 1, 1)
+    y2_vals = []
     for i in x_axis:
         count = 0
-        sum1 = 0
         sum2 = 0
-        total_diff = 0
         for img_idx in data[i - 1]:
             for info in data[i - 1][img_idx]['equals'][:i]:
                 sum2 += info[2]
