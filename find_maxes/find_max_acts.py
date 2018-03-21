@@ -57,6 +57,7 @@ def main():
 
     settings.caffevis_deploy_prototxt = args.net_prototxt
     settings.caffevis_network_weights = args.net_weights
+    settings.static_files_dir = args.datadir
 
     net, data_mean = load_network(settings)
 
