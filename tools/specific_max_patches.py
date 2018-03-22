@@ -56,6 +56,10 @@ def main():
     settings.caffevis_deploy_prototxt = args.net_prototxt
     settings.caffevis_network_weights = args.net_weights
 
+    if args.datadir != None:
+        settings.static_files_dir = args.datadir
+        
+
     if args.unit_list != None:
         assert os.path.exists(args.unit_list)
         with open(args.unit_list, 'rt') as f:
