@@ -41,7 +41,7 @@ def main():
     parser.add_argument('--iter_step', type = int, default = 300, help = 'iteration steps when multiple files2 are used')
     parser.add_argument('--save_pickled', type = bool, default = False, help = 'Whether to save extracted data as *.pickled. No pickled is saved by default')
     parser.add_argument('--save_json', type = bool, default = True, help = 'Whether to save Interesting units as json. Default is True')
-    parser.add_argument('--no_eval', type = bool, default = False, help = 'Don\'t create plots if True')
+    parser.add_argument('--no_eval', type = bool, default = True, help = 'Don\'t create plots if True')
     parser.add_argument('--compile_csv', type = bool, default = True, help = 'Save progress over iterations as csv table. Does nothing if len(file2) == 1')
 
     args = parser.parse_args()
