@@ -78,8 +78,9 @@ def get_parser():
                         help = 'Learning rate policy. See description in lr-params.')
     parser.add_argument('--lr-params', type = str, default = settings.optimize_image_lr_params,
                         help = 'Learning rate params, specified as a string that evalutes to a Python dict. Params that must be provided dependon which lr-policy is selected. The "constant" policy requires the "lr" key and uses the constant given learning rate. The "progress" policy requires the "max_lr" and "desired_prog" keys and scales the learning rate such that the objective function will change by an amount equal to DESIRED_PROG under a linear objective assumption, except the LR is limited to MAX_LR. The "progress01" policy requires the "max_lr", "early_prog", and "late_prog_mult" keys and is tuned for optimizing neurons with outputs in the [0,1] range, e.g. neurons on a softmax layer. Under this policy optimization slows down as the output approaches 1 (see code for details).')
-    parser.add_argument('--max-iters', type = list, default = settings.optimize_image_max_iters,
-                        help = 'List of number of iterations of the optimization loop.')
+    # parser.add_argument('--max-iters', type = list, default = settings.optimize_image_max_iters,
+                        # help = 'List of number of iterations of the optimization loop.')
+    parser.add_argument('--max-iter', type = int, default = 1000, help = 'number of iterations of the optimization loop.')
 
     # Where to save results
     parser.add_argument('--output-prefix', type = str, default = settings.optimize_image_output_prefix,
@@ -222,9 +223,9 @@ def main():
                 px_abs_benefit_percentile = args.px_abs_benefit_percentile,
                 lr_policy = args.lr_policy,
                 lr_params = lr_params,
-                max_iter = args.max_iters[count % len(args.max_iters)],
+                max_iter = args.max_iter,
                 is_spatial = is_spatial,
-            )
+            )#max_iter = args.max_iters[count % len(args.max_iters)],
 
             optimizer.run_optimize(params, prefix_template = args.output_prefix,
                                    brave = args.brave, skipbig = args.skipbig, skipsmall = args.skipsmall)
