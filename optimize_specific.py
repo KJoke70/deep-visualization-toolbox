@@ -36,14 +36,15 @@ def main():
     config4 = os.path.join(currentdir, 'optimize_image.py') + " --decay 0 --blur-radius 0.5 --blur-every 4 --px-abs-benefit-percentile 90 --max-iter 1000 --lr-policy progress --lr-params \"{'max_lr': 100000000, 'desired_prog': 2.0}\""
     
     for layer in unit_list:
-            if not os.path.exists(os.path.join(args.outdir, layer)) and not layer in args.ignore_layers:
+            if not layer in args.ignore_layers:
                 units = set(unit_list[layer])
                 for unit in units:
-                    os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config1, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c1_' + str(unit))))
-                    os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config2, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c2_' + str(unit))))
-                    os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config3, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c3_' + str(unit))))
-                    os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config4, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c4_' + str(unit))))
-                    # os.system("%s --decay 0.0001 --blur-radius 1.0 --blur-every 4 --lr-policy constant --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (os.path.join(currentdir, 'optimize_image.py'), args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_' + str(unit))))
+                    if not os.path.exists(os.path.join(args.outdir, layer, str(unit))):
+                        os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config1, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c1_' + str(unit))))
+                        os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config2, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c2_' + str(unit))))
+                        os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config3, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c3_' + str(unit))))
+                        os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config4, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c4_' + str(unit))))
+                        # os.system("%s --decay 0.0001 --blur-radius 1.0 --blur-every 4 --lr-policy constant --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (os.path.join(currentdir, 'optimize_image.py'), args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_' + str(unit))))
 
 
 if __name__ == '__main__':
