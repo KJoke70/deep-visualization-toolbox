@@ -39,7 +39,8 @@ def main():
             if not layer in args.ignore_layers:
                 units = set(unit_list[layer])
                 for unit in units:
-                    if not os.path.exists(os.path.join(args.outdir, layer, str(unit))):
+                    temp_p = os.path.join(args.outdir, layer, str(unit))
+                    if not os.path.exists(temp_p):
                         os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config1, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c1_' + str(unit))))
                         os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config2, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c2_' + str(unit))))
                         os.system("%s  --caffe-root=%s --deploy-proto=%s --net-weights=%s --data-size='(224,224)' --push-layers %s --push-channel=%d --output-prefix=%s" % (config3, args.caffe_root, args.net_prototxt, args.net_weights, layer, unit, os.path.join(args.outdir, layer, str(unit), 'opt_c3_' + str(unit))))
