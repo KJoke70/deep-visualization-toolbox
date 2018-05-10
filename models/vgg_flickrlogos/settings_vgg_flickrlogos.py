@@ -13,6 +13,16 @@ caffevis_label_layers    = ['fc8_flickrlogos', 'prob']
 caffevis_labels          = base_folder + './models/vgg_flickrlogos/flickrlogos_labels.txt'
 caffevis_prob_layer      = 'prob'
 
+# Min/max calculation settings
+max_tracker_do_histograms = False
+max_tracker_do_correlation = False
+max_tracker_do_maxes = True
+max_tracker_do_deconv = True
+max_tracker_do_deconv_norm = False
+max_tracker_do_backprop = True
+max_tracker_do_backprop_norm = False
+max_tracker_do_info = True
+
 def caffevis_layer_pretty_name_fn(name):
     return name.replace('conv','c').replace('pool','p')
 

@@ -48,9 +48,9 @@ def get_parser():
                         help = 'Batch size used for generating several images, each index will be used as random seed')
 
     # What to optimize
-    parser.add_argument('--push-layers', type = list, default = settings.layers_to_output_in_offline_scripts,
+    parser.add_argument('--push-layers', nargs='*', default = settings.layers_to_output_in_offline_scripts, 
                         help = 'Name of layers that contains the desired neuron whose value is optimized.')
-    parser.add_argument('--push-channel', type = int, default = '130',
+    parser.add_argument('--push-channel', type = int, default = None,
                         help = 'Channel number for desired neuron whose value is optimized (channel for conv, neuron index for FC).')
     parser.add_argument('--push-spatial', type = str, default = 'None',
                         help = 'Which spatial location to push for conv layers. For FC layers, set this to None. For conv layers, set it to a tuple, e.g. when using `--push-layer conv5` on AlexNet, --push-spatial (6,6) will maximize the center unit of the 13x13 spatial grid.')
@@ -78,8 +78,9 @@ def get_parser():
                         help = 'Learning rate policy. See description in lr-params.')
     parser.add_argument('--lr-params', type = str, default = settings.optimize_image_lr_params,
                         help = 'Learning rate params, specified as a string that evalutes to a Python dict. Params that must be provided dependon which lr-policy is selected. The "constant" policy requires the "lr" key and uses the constant given learning rate. The "progress" policy requires the "max_lr" and "desired_prog" keys and scales the learning rate such that the objective function will change by an amount equal to DESIRED_PROG under a linear objective assumption, except the LR is limited to MAX_LR. The "progress01" policy requires the "max_lr", "early_prog", and "late_prog_mult" keys and is tuned for optimizing neurons with outputs in the [0,1] range, e.g. neurons on a softmax layer. Under this policy optimization slows down as the output approaches 1 (see code for details).')
-    parser.add_argument('--max-iters', type = list, default = settings.optimize_image_max_iters,
-                        help = 'List of number of iterations of the optimization loop.')
+    # parser.add_argument('--max-iters', type = list, default = settings.optimize_image_max_iters,
+                        # help = 'List of number of iterations of the optimization loop.')
+    parser.add_argument('--max-iter', type = int, default = 1000, help = 'number of iterations of the optimization loop.')
 
     # Where to save results
     parser.add_argument('--output-prefix', type = str, default = settings.optimize_image_output_prefix,
@@ -137,7 +138,7 @@ def parse_and_validate_push_spatial(parser, push_spatial):
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    
+
     # Finish parsing args
 
     lr_params = parse_and_validate_lr_params(parser, args.lr_policy, args.lr_params)
@@ -196,7 +197,9 @@ def main():
             push_spatial = (0, 0)
 
         # if channels defined in settings file, use them
-        if settings.optimize_image_channels:
+        if args.push_channel != None:
+            channels_list = [args.push_channel]
+        elif settings.optimize_image_channels:
             channels_list = settings.optimize_image_channels
         else:
             channels_list = range(channels)
@@ -220,9 +223,9 @@ def main():
                 px_abs_benefit_percentile = args.px_abs_benefit_percentile,
                 lr_policy = args.lr_policy,
                 lr_params = lr_params,
-                max_iter = args.max_iters[count % len(args.max_iters)],
+                max_iter = args.max_iter,
                 is_spatial = is_spatial,
-            )
+            )#max_iter = args.max_iters[count % len(args.max_iters)],
 
             optimizer.run_optimize(params, prefix_template = args.output_prefix,
                                    brave = args.brave, skipbig = args.skipbig, skipsmall = args.skipsmall)
